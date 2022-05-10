@@ -16,7 +16,7 @@
 
 /* global variable */
 
-#define ROBJECT_TRANSIENT_FLAG    FL_USER13
+#define ROBJECT_TRANSIENT_FLAG    FL_USER2
 
 /* variable.c */
 void rb_gc_mark_global_tbl(void);
@@ -37,6 +37,43 @@ static inline void ROBJ_TRANSIENT_SET(VALUE obj);
 static inline void ROBJ_TRANSIENT_UNSET(VALUE obj);
 uint32_t rb_obj_ensure_iv_index_mapping(VALUE obj, ID id);
 
+typedef uint16_t shape_id_t;
+
+struct rb_shape {
+    VALUE flags;
+    struct rb_shape * parent;
+    struct rb_id_table * edges;
+    struct rb_id_table * iv_table;
+    ID edge_name;
+};
+
+#define SHAPE_ID(shape) get_shape_id((VALUE)shape)
+
+#ifndef rb_shape_t
+typedef struct rb_shape rb_shape_t;
+#define rb_shape_t rb_shape_t
+#endif
+
+shape_id_t get_shape_id(VALUE obj);
+rb_shape_t* get_shape_by_id(shape_id_t shape_id);
+rb_shape_t* get_shape_by_id_without_assertion(shape_id_t shape_id);
+rb_shape_t* get_shape(VALUE obj);
+rb_shape_t* get_next_shape(rb_shape_t* obj, ID id);
+rb_shape_t* get_root_shape();
+rb_shape_t* get_frozen_root_shape();
+bool root_shape_p(rb_shape_t* shape);
+void set_shape(VALUE obj, rb_shape_t* shape);
+int get_iv_index_from_shape(rb_shape_t * shape, ID id, VALUE * value);
+void transition_shape(VALUE obj, ID id);
+void set_shape_by_id(shape_id_t, rb_shape_t *);
+rb_shape_t * rb_shape_alloc(shape_id_t shape_id, ID edge_name, rb_shape_t * parent, struct rb_id_table * iv_table);
+
+# define MAX_SHAPE_ID 0xFFFE
+# define NO_CACHE_SHAPE_ID (0x2)
+# define INVALID_SHAPE_ID (MAX_SHAPE_ID + 1)
+# define ROOT_SHAPE_ID 0x0
+# define FROZEN_ROOT_SHAPE_ID 0x1
+
 RUBY_SYMBOL_EXPORT_BEGIN
 /* variable.c (export) */
 void rb_mark_generic_ivar(VALUE);
@@ -52,6 +89,7 @@ VALUE rb_gvar_set(ID, VALUE);
 VALUE rb_gvar_defined(ID);
 void rb_const_warn_if_deprecated(const rb_const_entry_t *, VALUE, ID);
 void rb_init_iv_list(VALUE obj);
+void rb_ensure_iv_list_size(VALUE obj, uint32_t len, uint32_t newsize);
 MJIT_SYMBOL_EXPORT_END
 
 static inline bool

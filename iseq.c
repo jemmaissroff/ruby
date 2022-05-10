@@ -279,20 +279,21 @@ iseq_extract_values(VALUE *code, size_t pos, iseq_value_itr_t * func, void *data
             }
             break;
           case TS_IVC:
-          case TS_ICVARC:
             {
                 IVC ivc = (IVC)code[pos + op_no + 1];
-                if (ivc->entry) {
-                    if (RB_TYPE_P(ivc->entry->class_value, T_NONE)) {
-                        rb_bug("!! %u", ivc->entry->index);
-                    }
-                    VALUE nv = func(data, ivc->entry->class_value);
-                    if (ivc->entry->class_value != nv) {
-                        ivc->entry->class_value = nv;
-                    }
+                shape_id_t shape_source_id = vm_ic_attr_index_shape_source_id(ivc);
+                shape_id_t shape_dest_id = vm_ic_attr_index_shape_dest_id(ivc);
+                if (shape_source_id != INVALID_SHAPE_ID) {
+                    rb_shape_t *shape = get_shape_by_id(shape_source_id);
+                    func(data, (VALUE)shape);
                 }
+                if (shape_dest_id != INVALID_SHAPE_ID) {
+                    rb_shape_t *shape = get_shape_by_id(shape_dest_id);
+                    func(data, (VALUE)shape);
+                }
+                break;
             }
-            break;
+          case TS_ICVARC:
           case TS_ISE:
             {
               union iseq_inline_storage_entry *const is = (union iseq_inline_storage_entry *)code[pos + op_no + 1];

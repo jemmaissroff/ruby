@@ -248,7 +248,9 @@ struct iseq_inline_constant_cache {
 };
 
 struct iseq_inline_iv_cache_entry {
-    struct rb_iv_index_tbl_entry *entry;
+    uint16_t source_shape_id;
+    uint16_t dest_shape_id;
+    uint32_t attr_index;
 };
 
 struct iseq_inline_cvar_cache_entry {
@@ -320,6 +322,13 @@ pathobj_realpath(VALUE pathobj)
 
 /* Forward declarations */
 struct rb_mjit_unit;
+
+struct rb_shape;
+
+#ifndef rb_shape_t
+typedef struct rb_shape rb_shape_t;
+#define rb_shape_t rb_shape_t
+#endif
 
 struct rb_iseq_constant_body {
     enum iseq_type {
@@ -646,6 +655,11 @@ typedef struct rb_vm_struct {
     /* object management */
     VALUE mark_object_ary;
     const VALUE special_exceptions[ruby_special_error_count];
+
+    rb_shape_t **shape_list;
+    rb_shape_t *root_shape;
+    rb_shape_t *frozen_root_shape;
+    rb_shape_t *no_cache_shape;
 
     /* load */
     VALUE top_self;

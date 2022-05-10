@@ -267,6 +267,7 @@ rb_obj_singleton_class(VALUE obj)
 MJIT_FUNC_EXPORTED void
 rb_obj_copy_ivar(VALUE dest, VALUE obj)
 {
+    rb_init_iv_list(dest);
     VALUE *dst_buf = 0;
     VALUE *src_buf = 0;
     uint32_t len = ROBJECT_EMBED_LEN_MAX;
@@ -307,7 +308,9 @@ init_copy(VALUE dest, VALUE obj)
     rb_copy_wb_protected_attribute(dest, obj);
     rb_copy_generic_ivar(dest, obj);
     rb_gc_copy_finalizer(dest, obj);
+
     if (RB_TYPE_P(obj, T_OBJECT)) {
+        set_shape(dest, get_shape(obj));
 	rb_obj_copy_ivar(dest, obj);
     }
 }

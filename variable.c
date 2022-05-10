@@ -55,10 +55,11 @@ static st_table *generic_iv_tbl_;
 
 struct ivar_update {
     union {
-	st_table *iv_index_tbl;
+	struct rb_id_table *iv_index_tbl;
 	struct gen_ivtbl *ivtbl;
     } u;
-    st_data_t index;
+    uint32_t index;
+    rb_shape_t* shape;
     int iv_extended;
 };
 
@@ -880,22 +881,29 @@ rb_alias_variable(ID name1, ID name2)
 }
 
 static bool
-iv_index_tbl_lookup(struct st_table *tbl, ID id, uint32_t *indexp)
+iv_index_tbl_lookup(VALUE obj, ID id, uint32_t *indexp)
 {
     st_data_t ent_data;
     int r;
 
-    if (tbl == NULL) return false;
+    rb_shape_t* shape = get_shape(obj);
+    struct rb_id_table *iv_table;
+
+    if (rb_no_cache_shape_p(shape)) {
+        iv_table = ROBJECT(obj)->as.heap.iv_index_tbl;
+    }
+    else {
+        iv_table  = shape->iv_table;
+    }
 
     RB_VM_LOCK_ENTER();
     {
-        r = st_lookup(tbl, (st_data_t)id, &ent_data);
+        r = iv_table && rb_id_table_lookup(iv_table, (st_data_t)id, &ent_data);
     }
     RB_VM_LOCK_LEAVE();
 
     if (r) {
-        struct rb_iv_index_tbl_entry *ent = (void *)ent_data;
-        *indexp = ent->index;
+        *indexp = (uint32_t)ent_data;
         return true;
     }
     else {
@@ -984,10 +992,10 @@ generic_ivar_delete(VALUE obj, ID id, VALUE undef)
     struct gen_ivtbl *ivtbl;
 
     if (gen_ivtbl_get(obj, id, &ivtbl)) {
-	st_table *iv_index_tbl = RCLASS_IV_INDEX_TBL(rb_obj_class(obj));
+        struct rb_id_table *iv_index_tbl = get_shape(obj)->iv_table;
         uint32_t index;
 
-        if (iv_index_tbl && iv_index_tbl_lookup(iv_index_tbl, id, &index)) {
+        if (iv_index_tbl && iv_index_tbl_lookup(obj, id, &index)) {
 	    if (index < ivtbl->numiv) {
 		VALUE ret = ivtbl->ivptr[index];
 
@@ -1005,10 +1013,10 @@ generic_ivar_get(VALUE obj, ID id, VALUE undef)
     struct gen_ivtbl *ivtbl;
 
     if (gen_ivtbl_get(obj, id, &ivtbl)) {
-	st_table *iv_index_tbl = RCLASS_IV_INDEX_TBL(rb_obj_class(obj));
+        struct rb_id_table *iv_index_tbl = get_shape(obj)->iv_table;
         uint32_t index;
 
-	if (iv_index_tbl && iv_index_tbl_lookup(iv_index_tbl, id, &index)) {
+	if (iv_index_tbl && iv_index_tbl_lookup(obj, id, &index)) {
 	    if (index < ivtbl->numiv) {
 		VALUE ret = ivtbl->ivptr[index];
 
@@ -1056,7 +1064,7 @@ static uint32_t
 iv_index_tbl_newsize(struct ivar_update *ivup)
 {
     if (!ivup->iv_extended) {
-        return (uint32_t)ivup->u.iv_index_tbl->num_entries;
+        return (uint32_t) rb_id_table_size(ivup->u.iv_index_tbl);
     }
     else {
         uint32_t index = (uint32_t)ivup->index;	/* should not overflow */
@@ -1084,6 +1092,7 @@ generic_ivar_update(st_data_t *k, st_data_t *v, st_data_t u, int existing)
     ivtbl = gen_ivtbl_resize(ivtbl, newsize);
     *v = (st_data_t)ivtbl;
     ivup->u.ivtbl = ivtbl;
+    ivtbl->shape_id = SHAPE_ID(ivup->shape);
     return ST_CONTINUE;
 }
 
@@ -1091,10 +1100,9 @@ static VALUE
 generic_ivar_defined(VALUE obj, ID id)
 {
     struct gen_ivtbl *ivtbl;
-    st_table *iv_index_tbl = RCLASS_IV_INDEX_TBL(rb_obj_class(obj));
     uint32_t index;
 
-    if (!iv_index_tbl_lookup(iv_index_tbl, id, &index)) return Qfalse;
+    if (!iv_index_tbl_lookup(obj, id, &index)) return Qfalse;
     if (!gen_ivtbl_get(obj, id, &ivtbl)) return Qfalse;
 
     return RBOOL((index < ivtbl->numiv) && (ivtbl->ivptr[index] != Qundef));
@@ -1105,10 +1113,10 @@ generic_ivar_remove(VALUE obj, ID id, VALUE *valp)
 {
     struct gen_ivtbl *ivtbl;
     uint32_t index;
-    st_table *iv_index_tbl = RCLASS_IV_INDEX_TBL(rb_obj_class(obj));
+    struct rb_id_table *iv_index_tbl = get_shape(obj)->iv_table;
 
     if (!iv_index_tbl) return 0;
-    if (!iv_index_tbl_lookup(iv_index_tbl, id, &index)) return 0;
+    if (!iv_index_tbl_lookup(obj, id, &index)) return 0;
     if (!gen_ivtbl_get(obj, id, &ivtbl)) return 0;
 
     if (index < ivtbl->numiv) {
@@ -1137,6 +1145,7 @@ rb_mark_generic_ivar(VALUE obj)
     struct gen_ivtbl *ivtbl;
 
     if (gen_ivtbl_get(obj, 0, &ivtbl)) {
+        rb_gc_mark((VALUE)get_shape_by_id(ivtbl->shape_id));
 	gen_ivtbl_mark(ivtbl);
     }
 }
@@ -1245,7 +1254,7 @@ rb_ivar_lookup(VALUE obj, ID id, VALUE undef)
             VALUE *ptr = ROBJECT_IVPTR(obj);
             VALUE val;
 
-            if (iv_index_tbl_lookup(ROBJECT_IV_INDEX_TBL(obj), id, &index) &&
+            if (iv_index_tbl_lookup(obj, id, &index) &&
                 index < len &&
                 (val = ptr[index]) != Qundef) {
                 return val;
@@ -1299,7 +1308,6 @@ static VALUE
 rb_ivar_delete(VALUE obj, ID id, VALUE undef)
 {
     VALUE *ptr;
-    struct st_table *iv_index_tbl;
     uint32_t len, index;
 
     rb_check_frozen(obj);
@@ -1307,8 +1315,8 @@ rb_ivar_delete(VALUE obj, ID id, VALUE undef)
       case T_OBJECT:
         len = ROBJECT_NUMIV(obj);
         ptr = ROBJECT_IVPTR(obj);
-        iv_index_tbl = ROBJECT_IV_INDEX_TBL(obj);
-        if (iv_index_tbl_lookup(iv_index_tbl, id, &index) &&
+
+        if (iv_index_tbl_lookup(obj, id, &index) &&
             index < len) {
             VALUE val = ptr[index];
             ptr[index] = Qundef;
@@ -1342,66 +1350,59 @@ rb_attr_delete(VALUE obj, ID id)
     return rb_ivar_delete(obj, id, Qnil);
 }
 
-static st_table *
-iv_index_tbl_make(VALUE obj, VALUE klass)
-{
-    st_table *iv_index_tbl;
-
-    if (UNLIKELY(!klass)) {
-        rb_raise(rb_eTypeError, "hidden object cannot have instance variables");
-    }
-
-    if ((iv_index_tbl = RCLASS_IV_INDEX_TBL(klass)) == NULL) {
-        RB_VM_LOCK_ENTER();
-        if ((iv_index_tbl = RCLASS_IV_INDEX_TBL(klass)) == NULL) {
-            iv_index_tbl = RCLASS_IV_INDEX_TBL(klass) = st_init_numtable();
-        }
-        RB_VM_LOCK_LEAVE();
-    }
-
-    return iv_index_tbl;
-}
-
 static void
-iv_index_tbl_extend(struct ivar_update *ivup, ID id, VALUE klass)
+iv_index_tbl_extend(VALUE obj, struct ivar_update *ivup, ID id)
 {
     ASSERT_vm_locking();
-    st_data_t ent_data;
-    struct rb_iv_index_tbl_entry *ent;
+    VALUE ent_data;
+    struct rb_id_table *iv_table;
 
-    if (st_lookup(ivup->u.iv_index_tbl, (st_data_t)id, &ent_data)) {
-        ent = (void *)ent_data;
-        ivup->index = ent->index;
+    if (rb_no_cache_shape_p(ivup->shape)) {
+        iv_table = ROBJECT(obj)->as.heap.iv_index_tbl;
+        if ((VALUE)iv_table == Qundef) {
+            iv_table = rb_id_table_create(0);
+        }
+        uint32_t index = (uint32_t)rb_id_table_size(iv_table);
+        rb_id_table_insert(iv_table, id, (VALUE)index);
+        ivup->u.iv_index_tbl = iv_table;
+        ROBJECT(obj)->as.heap.iv_index_tbl = iv_table;
+    }
+    else {
+        // This sets the iv table in the ivup struct
+        ivup->u.iv_index_tbl = ivup->shape->iv_table;
+    }
+
+    // This should always hit
+    if (rb_id_table_lookup(ivup->u.iv_index_tbl, id, &ent_data)) {
+        ivup->index = (uint32_t) ent_data;
+        ivup->iv_extended = 1;
 	return;
     }
-    if (ivup->u.iv_index_tbl->num_entries >= INT_MAX) {
-	rb_raise(rb_eArgError, "too many instance variables");
+    else {
+        rb_bug("Should have found the id here\n");
     }
-    ent = ALLOC(struct rb_iv_index_tbl_entry);
-    ent->index = ivup->index = (uint32_t)ivup->u.iv_index_tbl->num_entries;
-    ent->class_value = klass;
-    ent->class_serial = RCLASS_SERIAL(klass);
-    st_add_direct(ivup->u.iv_index_tbl, (st_data_t)id, (st_data_t)ent);
-    ivup->iv_extended = 1;
 }
 
 static void
 generic_ivar_set(VALUE obj, ID id, VALUE val)
 {
-    VALUE klass = rb_obj_class(obj);
     struct ivar_update ivup;
+    // The returned shape should have `id` in its iv_table
+    rb_shape_t * shape = get_next_shape(get_shape(obj), id);
+    ivup.shape = shape;
     ivup.iv_extended = 0;
-    ivup.u.iv_index_tbl = iv_index_tbl_make(obj, klass);
 
     RB_VM_LOCK_ENTER();
     {
-        iv_index_tbl_extend(&ivup, id, klass);
+        iv_index_tbl_extend(obj, &ivup, id);
         st_update(generic_ivtbl(obj, id, false), (st_data_t)obj, generic_ivar_update,
                   (st_data_t)&ivup);
     }
     RB_VM_LOCK_LEAVE();
 
     ivup.u.ivtbl->ivptr[ivup.index] = val;
+    set_shape(obj, shape);
+    RB_GC_GUARD(*(VALUE *)shape);
 
     RB_OBJ_WRITTEN(obj, Qundef, val);
 }
@@ -1467,8 +1468,8 @@ rb_obj_transient_heap_evacuate(VALUE obj, int promote)
 }
 #endif
 
-static void
-init_iv_list(VALUE obj, uint32_t len, uint32_t newsize, st_table *index_tbl)
+void
+rb_ensure_iv_list_size(VALUE obj, uint32_t len, uint32_t newsize)
 {
     VALUE *ptr = ROBJECT_IVPTR(obj);
     VALUE *newptr;
@@ -1487,16 +1488,14 @@ init_iv_list(VALUE obj, uint32_t len, uint32_t newsize, st_table *index_tbl)
         newptr[len] = Qundef;
     }
     ROBJECT(obj)->as.heap.numiv = newsize;
-    ROBJECT(obj)->as.heap.iv_index_tbl = index_tbl;
 }
 
 void
 rb_init_iv_list(VALUE obj)
 {
-    st_table *index_tbl = ROBJECT_IV_INDEX_TBL(obj);
-    uint32_t newsize = (uint32_t)index_tbl->num_entries;
+    uint32_t newsize = rb_id_table_size(ROBJECT_IV_INDEX_TBL(obj)) * 1.5;
     uint32_t len = ROBJECT_NUMIV(obj);
-    init_iv_list(obj, len, newsize, index_tbl);
+    rb_ensure_iv_list_size(obj, len, newsize < len ? len : newsize);
 }
 
 // Retrieve or create the id-to-index mapping for a given object and an
@@ -1504,14 +1503,13 @@ rb_init_iv_list(VALUE obj)
 static struct ivar_update
 obj_ensure_iv_index_mapping(VALUE obj, ID id)
 {
-    VALUE klass = rb_obj_class(obj);
     struct ivar_update ivup;
     ivup.iv_extended = 0;
-    ivup.u.iv_index_tbl = iv_index_tbl_make(obj, klass);
+    ivup.shape = get_shape(obj);
 
     RB_VM_LOCK_ENTER();
     {
-        iv_index_tbl_extend(&ivup, id, klass);
+        iv_index_tbl_extend(obj, &ivup, id);
     }
     RB_VM_LOCK_LEAVE();
 
@@ -1532,7 +1530,7 @@ rb_obj_ensure_iv_index_mapping(VALUE obj, ID id)
     // This uint32_t cast shouldn't lose information as it's checked in
     // iv_index_tbl_extend(). The index is stored as an uint32_t in
     // struct rb_iv_index_tbl_entry.
-    return (uint32_t)obj_ensure_iv_index_mapping(obj, id).index;
+    return obj_ensure_iv_index_mapping(obj, id).index;
 }
 
 static VALUE
@@ -1542,13 +1540,373 @@ obj_ivar_set(VALUE obj, ID id, VALUE val)
     struct ivar_update ivup = obj_ensure_iv_index_mapping(obj, id);
 
     len = ROBJECT_NUMIV(obj);
-    if (len <= ivup.index) {
+    if (len <= (ivup.index)) {
         uint32_t newsize = iv_index_tbl_newsize(&ivup);
-        init_iv_list(obj, len, newsize, ivup.u.iv_index_tbl);
+        rb_ensure_iv_list_size(obj, len, newsize);
     }
     RB_OBJ_WRITE(obj, &ROBJECT_IVPTR(obj)[ivup.index], val);
 
     return val;
+}
+
+#define SHAPE_UNMARKABLE IMEMO_FL_USER0
+
+static const struct rb_shape invalid_shape = {
+    .flags = T_IMEMO | (imemo_shape << FL_USHIFT) | SHAPE_UNMARKABLE,
+    .parent = NULL,
+    .edges = NULL,
+    .iv_table = NULL,
+    .edge_name = 0
+};
+
+rb_shape_t *
+rb_invalid_shape(void)
+{
+    return (rb_shape_t *)&invalid_shape;
+}
+
+bool
+rb_invalid_shape_p(rb_shape_t * shape)
+{
+    return shape == rb_invalid_shape();
+}
+
+bool
+rb_no_cache_shape_p(rb_shape_t * shape)
+{
+    // JEM TODO: Could likely save time by comparing IDs
+    rb_vm_t *vm = GET_VM();
+    return shape == vm->no_cache_shape;
+}
+
+
+shape_id_t get_shape_id(VALUE obj)
+{
+    shape_id_t shape_id = ROOT_SHAPE_ID;
+
+    if (RB_SPECIAL_CONST_P(obj))
+        return SHAPE_ID(get_frozen_root_shape());
+
+    switch (BUILTIN_TYPE(obj)) {
+      case T_OBJECT:
+      case T_CLASS:
+      case T_MODULE:
+          return (shape_id_t)(0xffff & (RBASIC(obj)->flags >> 16));
+          break;
+      case T_IMEMO:
+          if (imemo_type(obj) == imemo_shape) {
+              return (shape_id_t)(0xffff & (RBASIC(obj)->flags >> 16));
+              break;
+          }
+      default:
+          {
+              struct gen_ivtbl *ivtbl = 0;
+              RB_VM_LOCK_ENTER();
+              {
+                  st_table* global_iv_table = generic_ivtbl(obj, 0, false);
+
+                  if (global_iv_table && st_lookup(global_iv_table, obj, (st_data_t *)&ivtbl)) {
+                      shape_id = ivtbl->shape_id;
+                      RUBY_ASSERT(get_shape_by_id(shape_id));
+                  }
+                  else if (OBJ_FROZEN(obj)) {
+                      shape_id = FROZEN_ROOT_SHAPE_ID;
+                  }
+              }
+              RB_VM_LOCK_LEAVE();
+          }
+    }
+
+#if RUBY_DEBUG
+    assert(shape_id < MAX_SHAPE_ID);
+#endif
+    return shape_id;
+}
+
+static void
+set_shape_id(VALUE obj, shape_id_t shape_id)
+{
+    switch (BUILTIN_TYPE(obj)) {
+      case T_OBJECT:
+      case T_CLASS:
+      case T_MODULE:
+          // Ractors are occupying the upper 32 bits of flags
+          // Object shapes are occupying the next 16 bits
+          // 4 bits are unused
+          // 12 bits are occupied by RUBY_FL (see RUBY_FL_USHIFT)
+          // | XXXX ractor_id | shape_id | UUUU flags |
+          RBASIC(obj)->flags &= 0xffffffff0000ffff;
+          RBASIC(obj)->flags |= ((uint32_t)(shape_id) << 16);
+          return;
+      case T_IMEMO:
+          if (imemo_type(obj) == imemo_shape) {
+              RBASIC(obj)->flags &= 0xffffffff0000ffff;
+              RBASIC(obj)->flags |= ((uint32_t)(shape_id) << 16);
+              return;
+          }
+      default:
+          {
+              struct gen_ivtbl *ivtbl = 0;
+              RB_VM_LOCK_ENTER();
+              {
+                  st_table* global_iv_table = generic_ivtbl(obj, 0, false);
+
+                  if (st_lookup(global_iv_table, obj, (st_data_t *)&ivtbl)) {
+                      ivtbl->shape_id = shape_id;
+                  }
+                  else {
+                      rb_bug("Expected shape_id entry in global iv table");
+                  }
+              }
+              RB_VM_LOCK_LEAVE();
+          }
+    }
+}
+
+void
+set_shape(VALUE obj, rb_shape_t* shape)
+{
+    RUBY_ASSERT(IMEMO_TYPE_P(shape, imemo_shape));
+    set_shape_id(obj, SHAPE_ID(shape));
+    RB_OBJ_WRITTEN(obj, Qundef, (VALUE)shape);
+}
+
+void
+set_shape_by_id(shape_id_t shape_id, rb_shape_t *shape)
+{
+    rb_vm_t *vm = GET_VM();
+    RUBY_ASSERT(shape == NULL || IMEMO_TYPE_P(shape, imemo_shape));
+    vm->shape_list[shape_id] = shape;
+}
+
+rb_shape_t*
+get_shape_by_id_without_assertion(shape_id_t shape_id)
+{
+    RUBY_ASSERT(shape_id != INVALID_SHAPE_ID);
+
+    rb_vm_t *vm = GET_VM();
+    rb_shape_t *shape = vm->shape_list[shape_id];
+    return shape;
+}
+
+rb_shape_t*
+get_shape_by_id(shape_id_t shape_id)
+{
+    RUBY_ASSERT(shape_id != INVALID_SHAPE_ID);
+
+    rb_vm_t *vm = GET_VM();
+    rb_shape_t *shape = vm->shape_list[shape_id];
+    RUBY_ASSERT(IMEMO_TYPE_P(shape, imemo_shape));
+    return shape;
+}
+
+rb_shape_t* get_shape(VALUE obj)
+{
+    return get_shape_by_id(get_shape_id(obj));
+}
+
+rb_shape_t*
+get_parent_shape(VALUE obj)
+{
+    return get_shape(obj)->parent;
+}
+
+rb_shape_t*
+get_root_shape(void) {
+    rb_vm_t *vm = GET_VM();
+    return vm->root_shape;
+}
+
+rb_shape_t*
+get_frozen_root_shape(void) {
+    rb_vm_t *vm = GET_VM();
+    return vm->frozen_root_shape;
+}
+
+rb_shape_t*
+get_no_cache_shape(void) {
+    rb_vm_t *vm = GET_VM();
+    return vm->no_cache_shape;
+}
+
+bool
+root_shape_p(rb_shape_t* shape) {
+    return shape == get_root_shape();
+}
+
+bool
+frozen_root_shape_p(rb_shape_t* shape) {
+    return shape == get_frozen_root_shape();
+}
+
+int
+frozen_shape_p(rb_shape_t* shape)
+{
+    return RB_OBJ_FROZEN((VALUE)shape);
+}
+
+static rb_shape_t *
+shape_alloc(void)
+{
+    rb_shape_t *shape = (rb_shape_t *)rb_imemo_new(imemo_shape, 0, 0, 0, 0);
+    FL_SET_RAW((VALUE)shape, RUBY_FL_SHAREABLE);
+    return shape;
+}
+
+rb_shape_t *
+rb_shape_alloc(shape_id_t shape_id, ID edge_name, rb_shape_t * parent, struct rb_id_table * iv_table)
+{
+    rb_shape_t * shape = shape_alloc();
+    set_shape_id((VALUE)shape, shape_id);
+    shape->edge_name = edge_name;
+    shape->parent = parent;
+    RUBY_ASSERT(!parent || IMEMO_TYPE_P(parent, imemo_shape));
+    shape->iv_table = iv_table;
+    return shape;
+}
+
+enum transition_type {
+    SHAPE_IVAR,
+    SHAPE_FROZEN,
+};
+
+static shape_id_t
+get_next_shape_id(void)
+{
+    rb_vm_t *vm = GET_VM();
+    for (int i = 0; i < MAX_SHAPE_ID; i++) {
+        if (!vm->shape_list[i]) return i;
+    }
+    return MAX_SHAPE_ID;
+}
+
+static rb_shape_t*
+get_next_shape_internal(rb_shape_t* shape, ID id, enum transition_type tt)
+{
+    rb_shape_t *res = NULL;
+    RB_VM_LOCK_ENTER();
+    {
+        if (rb_id_table_lookup(shape->iv_table, id, (VALUE *)&res)) {
+            // If shape already contains the ivar that is being set, we'll return shape
+            res = shape;
+        }
+        else {
+            if (!shape->edges)
+                shape->edges = rb_id_table_create(0);
+
+            if (!rb_id_table_lookup(shape->edges, id, (VALUE *)&res) || rb_objspace_garbage_object_p((VALUE)res)) {
+                if (res) {
+                    res->parent = NULL;
+                }
+                shape_id_t next_shape_id = get_next_shape_id();
+
+                if (next_shape_id == MAX_SHAPE_ID) {
+                    res = get_no_cache_shape();
+                }
+                else {
+                    RUBY_ASSERT(next_shape_id < MAX_SHAPE_ID);
+                    rb_shape_t * new_shape = rb_shape_alloc(next_shape_id,
+                            id,
+                            shape,
+                            rb_id_table_copy(shape->iv_table));
+
+                    rb_id_table_insert(shape->edges, id, (VALUE)new_shape);
+                    RB_OBJ_WRITTEN((VALUE)new_shape, Qundef, (VALUE)shape);
+
+                    set_shape_by_id(next_shape_id, new_shape);
+
+                    if (tt == SHAPE_IVAR) {
+                        rb_id_table_insert(new_shape->iv_table, id, (VALUE)rb_id_table_size(new_shape->iv_table));
+                    }
+                    else {
+                        RB_OBJ_FREEZE_RAW((VALUE)new_shape);
+                    }
+
+                    res = new_shape;
+                }
+            }
+        }
+    }
+    RB_VM_LOCK_LEAVE();
+    return res;
+}
+
+rb_shape_t*
+get_next_shape(rb_shape_t* shape, ID id)
+{
+    return get_next_shape_internal(shape, id, SHAPE_IVAR);
+}
+
+int get_iv_index_from_shape(rb_shape_t * shape, ID id, VALUE *value) {
+    if (shape->iv_table) {
+        return rb_id_table_lookup(shape->iv_table, id, value);
+    }
+    else {
+        return 0;
+    }
+}
+
+void transition_shape_frozen(VALUE obj)
+{
+    rb_shape_t* shape = get_shape(obj);
+    RUBY_ASSERT(shape);
+
+    rb_shape_t* next_shape;
+
+    if (shape == get_frozen_root_shape())
+        return;
+
+    if (shape == get_root_shape()) {
+        switch(BUILTIN_TYPE(obj)) {
+            case T_OBJECT:
+            case T_CLASS:
+            case T_MODULE:
+                break;
+            default:
+                return;
+        }
+        next_shape = get_frozen_root_shape();
+    }
+    else {
+        if (frozen_shape_p(shape)) {
+            next_shape = shape;
+        }
+        else {
+            static ID id_frozen;
+            if (!id_frozen) id_frozen = rb_make_internal_id();
+
+            next_shape = get_next_shape_internal(shape, (ID)id_frozen, SHAPE_FROZEN);
+        }
+    }
+
+    RUBY_ASSERT(next_shape);
+    set_shape(obj, next_shape);
+}
+
+void transition_shape(VALUE obj, ID id)
+{
+    rb_shape_t* next_shape = get_next_shape(get_shape(obj), id);
+    RUBY_ASSERT(!rb_objspace_garbage_object_p((VALUE)next_shape));
+    set_shape(obj, next_shape);
+}
+
+/**
+ * Prevents further modifications to the given object.  ::rb_eFrozenError shall
+ * be raised if modification is attempted.
+ *
+ * @param[out]  x  Object in question.
+ */
+void rb_obj_freeze_inline(VALUE x)
+{
+    if (RB_FL_ABLE(x)) {
+        RB_OBJ_FREEZE_RAW(x);
+
+        transition_shape_frozen(x);
+
+        if (RBASIC_CLASS(x) && !(RBASIC(x)->flags & RUBY_FL_SINGLETON)) {
+            rb_freeze_singleton_class(x);
+        }
+    }
 }
 
 static void
@@ -1558,10 +1916,14 @@ ivar_set(VALUE obj, ID id, VALUE val)
 
     switch (BUILTIN_TYPE(obj)) {
       case T_OBJECT:
-        obj_ivar_set(obj, id, val);
-        break;
+      {
+          transition_shape(obj, id);
+          obj_ivar_set(obj, id, val);
+          break;
+      }
       case T_CLASS:
       case T_MODULE:
+        transition_shape(obj, id);
         IVAR_ACCESSOR_SHOULD_BE_MAIN_RACTOR(id);
         rb_class_ivar_set(obj, id, val);
         break;
@@ -1592,14 +1954,12 @@ VALUE
 rb_ivar_defined(VALUE obj, ID id)
 {
     VALUE val;
-    struct st_table *iv_index_tbl;
     uint32_t index;
 
     if (SPECIAL_CONST_P(obj)) return Qfalse;
     switch (BUILTIN_TYPE(obj)) {
       case T_OBJECT:
-        iv_index_tbl = ROBJECT_IV_INDEX_TBL(obj);
-        if (iv_index_tbl_lookup(iv_index_tbl, id, &index) &&
+        if (iv_index_tbl_lookup(obj, id, &index) &&
             index < ROBJECT_NUMIV(obj) &&
             (val = ROBJECT_IVPTR(obj)[index]) != Qundef) {
             return Qtrue;
@@ -1621,48 +1981,69 @@ rb_ivar_defined(VALUE obj, ID id)
 typedef int rb_ivar_foreach_callback_func(ID key, VALUE val, st_data_t arg);
 st_data_t rb_st_nth_key(st_table *tab, st_index_t index);
 
-static ID
-iv_index_tbl_nth_id(st_table *iv_index_tbl, uint32_t index)
-{
-    st_data_t key;
-    RB_VM_LOCK_ENTER();
-    {
-        key = rb_st_nth_key(iv_index_tbl, index);
+void
+iterate_over_shapes(VALUE obj, rb_shape_t *shape, VALUE* iv_list, int numiv, rb_ivar_foreach_callback_func *callback, st_data_t arg) {
+    if (root_shape_p(shape)) {
+        return;
     }
-    RB_VM_LOCK_LEAVE();
-    return (ID)key;
+    else if (frozen_shape_p(shape)) {
+        return iterate_over_shapes(obj, shape->parent, iv_list, numiv, callback, arg);
+    }
+    else if (numiv <= 0) {
+        rb_bug("Incorrect numiv\n");
+    }
+    else {
+        rb_shape_t *parent_shape;
+        if (rb_no_cache_shape_p(shape)) {
+            parent_shape = shape;
+        }
+        else {
+            parent_shape = shape->parent;
+        }
+        iterate_over_shapes(obj, parent_shape, iv_list, numiv - 1, callback, arg);
+
+        if (iv_list[numiv - 1] != Qundef) {
+            ID id = shape->edge_name;
+
+            callback(id, iv_list[numiv - 1], arg);
+        }
+        return;
+    }
 }
 
-static inline bool
-ivar_each_i(st_table *iv_index_tbl, VALUE val, uint32_t i, rb_ivar_foreach_callback_func *func, st_data_t arg)
+static enum rb_id_table_iterator_result
+add_to_array(ID id, VALUE val, void * data)
 {
-    if (val != Qundef) {
-        ID id = iv_index_tbl_nth_id(iv_index_tbl, i);
-        switch (func(id, val, arg)) {
-          case ST_CHECK:
-          case ST_CONTINUE:
-            break;
-          case ST_STOP:
-            return true;
-          default:
-            rb_bug("unreachable");
-        }
-    }
-    return false;
+    uint32_t idx = (uint32_t)val;
+    VALUE * list = (VALUE *)data;
+    list[idx] = id;
+    return ID_TABLE_CONTINUE;
 }
 
 static void
 obj_ivar_each(VALUE obj, rb_ivar_foreach_callback_func *func, st_data_t arg)
 {
-    st_table *iv_index_tbl = ROBJECT_IV_INDEX_TBL(obj);
-    if (!iv_index_tbl) return;
-    uint32_t i=0;
+    rb_shape_t* shape = get_shape(obj);
+    struct rb_id_table *iv_index_tbl;
 
-    for (i=0; i < ROBJECT_NUMIV(obj); i++) {
-        VALUE val = ROBJECT_IVPTR(obj)[i];
-        if (ivar_each_i(iv_index_tbl, val, i, func, arg)) {
+    if (rb_no_cache_shape_p(shape)) {
+        iv_index_tbl = ROBJECT(obj)->as.heap.iv_index_tbl;
+        uint32_t table_size = (uint32_t) rb_id_table_size(iv_index_tbl);
+        VALUE * array = xmalloc(sizeof(VALUE) * table_size);
+
+        rb_id_table_foreach(iv_index_tbl, add_to_array, array);
+        for (uint32_t i = 0; i < table_size; i++) {
+            func(array[i], ROBJECT_IVPTR(obj)[i], arg);
+        }
+
+        xfree(array);
+    }
+    else {
+        iv_index_tbl = get_shape(obj)->iv_table;
+        if (!iv_index_tbl) {
             return;
         }
+        iterate_over_shapes(obj, get_shape(obj), ROBJECT_IVPTR(obj), (int)rb_id_table_size(iv_index_tbl), func, arg);
     }
 }
 
@@ -1670,92 +2051,45 @@ static void
 gen_ivar_each(VALUE obj, rb_ivar_foreach_callback_func *func, st_data_t arg)
 {
     struct gen_ivtbl *ivtbl;
-    st_table *iv_index_tbl = RCLASS_IV_INDEX_TBL(rb_obj_class(obj));
+    struct rb_id_table *iv_index_tbl = get_shape(obj)->iv_table;
     if (!iv_index_tbl) return;
     if (!gen_ivtbl_get(obj, 0, &ivtbl)) return;
 
-    for (uint32_t i=0; i<ivtbl->numiv; i++) {
-        VALUE val = ivtbl->ivptr[i];
-        if (ivar_each_i(iv_index_tbl, val, i, func, arg)) {
-            return;
-        }
-    }
-}
-
-struct givar_copy {
-    VALUE obj;
-    VALUE klass;
-    st_table *iv_index_tbl;
-    struct gen_ivtbl *ivtbl;
-};
-
-static int
-gen_ivar_copy(ID id, VALUE val, st_data_t arg)
-{
-    struct givar_copy *c = (struct givar_copy *)arg;
-    struct ivar_update ivup;
-
-    ivup.iv_extended = 0;
-    ivup.u.iv_index_tbl = c->iv_index_tbl;
-
-    RB_VM_LOCK_ENTER();
-    {
-        iv_index_tbl_extend(&ivup, id, c->klass);
-    }
-    RB_VM_LOCK_LEAVE();
-
-    if (ivup.index >= c->ivtbl->numiv) {
-	uint32_t newsize = iv_index_tbl_newsize(&ivup);
-	c->ivtbl = gen_ivtbl_resize(c->ivtbl, newsize);
-    }
-    c->ivtbl->ivptr[ivup.index] = val;
-
-    RB_OBJ_WRITTEN(c->obj, Qundef, val);
-
-    return ST_CONTINUE;
+    iterate_over_shapes(obj, get_shape(obj), ivtbl->ivptr, (int)rb_id_table_size(get_shape(obj)->iv_table), func, arg);
 }
 
 void
 rb_copy_generic_ivar(VALUE clone, VALUE obj)
 {
-    struct gen_ivtbl *ivtbl;
+    struct gen_ivtbl *obj_ivtbl;
+    struct gen_ivtbl *new_ivtbl;
 
     rb_check_frozen(clone);
 
     if (!FL_TEST(obj, FL_EXIVAR)) {
         goto clear;
     }
-    if (gen_ivtbl_get(obj, 0, &ivtbl)) {
-	struct givar_copy c;
-	uint32_t i;
 
-	if (gen_ivtbl_count(ivtbl) == 0)
-	    goto clear;
+    if (gen_ivtbl_get(obj, 0, &obj_ivtbl)) {
+        if (gen_ivtbl_count(obj_ivtbl) == 0)
+            goto clear;
 
-	if (gen_ivtbl_get(clone, 0, &c.ivtbl)) {
-	    for (i = 0; i < c.ivtbl->numiv; i++)
-		c.ivtbl->ivptr[i] = Qundef;
-	}
-	else {
-	    c.ivtbl = gen_ivtbl_resize(0, ivtbl->numiv);
-	    FL_SET(clone, FL_EXIVAR);
-	}
+        new_ivtbl = gen_ivtbl_resize(0, obj_ivtbl->numiv);
+        FL_SET(clone, FL_EXIVAR);
 
-        VALUE klass = rb_obj_class(clone);
-	c.iv_index_tbl = iv_index_tbl_make(clone, klass);
-        c.obj = clone;
-        c.klass = klass;
-	gen_ivar_each(obj, gen_ivar_copy, (st_data_t)&c);
-	/*
-	 * c.ivtbl may change in gen_ivar_copy due to realloc,
-	 * no need to free
-	 */
+        for (uint32_t i=0; i<obj_ivtbl->numiv; i++) {
+            new_ivtbl->ivptr[i] = obj_ivtbl->ivptr[i];
+            RB_OBJ_WRITTEN(clone, Qundef, &new_ivtbl[i]);
+        }
+
         RB_VM_LOCK_ENTER();
         {
             generic_ivtbl_no_ractor_check(clone);
-            st_insert(generic_ivtbl_no_ractor_check(obj), (st_data_t)clone, (st_data_t)c.ivtbl);
+            st_insert(generic_ivtbl_no_ractor_check(obj), (st_data_t)clone, (st_data_t)new_ivtbl);
         }
         RB_VM_LOCK_LEAVE();
+
+        set_shape(clone, get_shape(obj));
     }
     return;
 
@@ -1943,7 +2277,6 @@ rb_obj_remove_instance_variable(VALUE obj, VALUE name)
     VALUE val = Qnil;
     const ID id = id_for_var(obj, name, an, instance);
     st_data_t n, v;
-    struct st_table *iv_index_tbl;
     uint32_t index;
 
     rb_check_frozen(obj);
@@ -1953,8 +2286,7 @@ rb_obj_remove_instance_variable(VALUE obj, VALUE name)
 
     switch (BUILTIN_TYPE(obj)) {
       case T_OBJECT:
-        iv_index_tbl = ROBJECT_IV_INDEX_TBL(obj);
-        if (iv_index_tbl_lookup(iv_index_tbl, id, &index) &&
+        if (iv_index_tbl_lookup(obj, id, &index) &&
             index < ROBJECT_NUMIV(obj) &&
             (val = ROBJECT_IVPTR(obj)[index]) != Qundef) {
             ROBJECT_IVPTR(obj)[index] = Qundef;

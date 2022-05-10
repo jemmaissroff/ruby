@@ -26,6 +26,7 @@
 #include "internal/thread.h"
 #include "internal/vm.h"
 #include "internal/sanitizers.h"
+#include "internal/variable.h"
 #include "iseq.h"
 #include "mjit.h"
 #include "yjit.h"
@@ -2619,6 +2620,11 @@ rb_vm_update_references(void *ptr)
         vm->top_self = rb_gc_location(vm->top_self);
         vm->orig_progname = rb_gc_location(vm->orig_progname);
 
+        for (int i = 0; i < MAX_SHAPE_ID; i++) {
+            if (vm->shape_list[i])
+                vm->shape_list[i] = (rb_shape_t *)rb_gc_location((VALUE)vm->shape_list[i]);
+        }
+
         rb_gc_update_tbl_refs(vm->overloaded_cme_table);
 
         if (vm->coverages) {
@@ -2700,6 +2706,9 @@ rb_vm_mark(void *ptr)
             obj_ary++;
         }
 
+        rb_gc_mark((VALUE)vm->root_shape);
+        rb_gc_mark((VALUE)vm->frozen_root_shape);
+        rb_gc_mark((VALUE)vm->no_cache_shape);
         rb_gc_mark_movable(vm->load_path);
         rb_gc_mark_movable(vm->load_path_snapshot);
         RUBY_MARK_MOVABLE_UNLESS_NULL(vm->load_path_check_cache);
@@ -3584,6 +3593,7 @@ Init_VM(void)
     rb_define_singleton_method(rb_cRubyVM, "stat", vm_stat, -1);
     rb_define_singleton_method(rb_cRubyVM, "keep_script_lines", vm_keep_script_lines, 0);
     rb_define_singleton_method(rb_cRubyVM, "keep_script_lines=", vm_keep_script_lines_set, 1);
+    rb_define_singleton_method(rb_cRubyVM, "debug_shape", rb_obj_debug_shape, 1);
 
 #if USE_DEBUG_COUNTER
     rb_define_singleton_method(rb_cRubyVM, "reset_debug_counters", rb_debug_counter_reset, 0);
@@ -3969,6 +3979,34 @@ Init_vm_objects(void)
     vm->mark_object_ary = rb_ary_tmp_new(128);
     vm->loading_table = st_init_strtable();
     vm->frozen_strings = st_init_table_with_size(&rb_fstring_hash_type, 10000);
+    vm->shape_list = xcalloc(MAX_SHAPE_ID, sizeof(rb_shape_t *));
+
+    // Root shape
+    vm->root_shape = rb_shape_alloc(ROOT_SHAPE_ID,
+            0,
+            0,
+            rb_id_table_create(0));
+    set_shape_by_id(ROOT_SHAPE_ID, vm->root_shape);
+    RB_OBJ_WRITTEN(vm->root_shape, Qundef, (VALUE)vm);
+
+    // Frozen root shape
+    vm->frozen_root_shape = rb_shape_alloc(FROZEN_ROOT_SHAPE_ID,
+            0,
+            ROOT_SHAPE_ID,
+            rb_id_table_create(0));
+    RB_OBJ_FREEZE_RAW((VALUE)vm->frozen_root_shape);
+    set_shape_by_id(FROZEN_ROOT_SHAPE_ID, vm->frozen_root_shape);
+    RB_OBJ_WRITTEN(vm->frozen_root_shape, Qundef, (VALUE)vm);
+
+    // No cache shape
+    vm->no_cache_shape = rb_shape_alloc(NO_CACHE_SHAPE_ID,
+            0,
+            0,
+            rb_id_table_create(0));
+    set_shape_by_id(NO_CACHE_SHAPE_ID, vm->no_cache_shape);
+    RB_OBJ_WRITTEN(vm->no_cache_shape, Qundef, (VALUE)vm);
+
+    memset(vm->allocated_shape_bitmap, 0, (0xFFFF / sizeof(uint)));
 }
 
 /* Stub for builtin function when not building YJIT units*/
