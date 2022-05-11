@@ -83,10 +83,10 @@ See the file [COPYING](rdoc-ref:COPYING).
 Questions about the Ruby language can be asked on the [Ruby-Talk] mailing list
 or on websites like https://stackoverflow.com.
 
-Bugs should be reported at https://bugs.ruby-lang.org. Read [HowToReport] for more information.
+Bugs should be reported at https://bugs.ruby-lang.org. Read ["Reporting Issues"] for more information.
 
 [Ruby-Talk]: https://www.ruby-lang.org/en/community/mailing-lists
-[HowToReport]: https://bugs.ruby-lang.org/projects/ruby/wiki/HowToReport
+["Reporting Issues"]: https://docs.ruby-lang.org/en/master/reporting_issues_md.html
 
 ## Contributing
 
