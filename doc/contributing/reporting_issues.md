@@ -16,8 +16,8 @@ following these steps:
   [sign up for an account](https://bugs.ruby-lang.org/account/register) on the
   Redmine issue tracker.
 * If you can't find a ticket addressing your issue, please [create a new issue](https://bugs.ruby-lang.org/projects/ruby-master/issues/new). You will need to fill in the subject, description and Ruby version.
-    
-    * Ensure the issue exists on Ruby master by trying to replicate your bug on 
+
+    * Ensure the issue exists on Ruby master by trying to replicate your bug on
       the head of master (see ["making changes to Ruby"](making_changes_to_ruby.md)).
     * Write a concise subject and briefly describe your problem in the description section. If
       your issue affects [a released version of Ruby](#label-Backport+requests), please say so.
@@ -35,7 +35,7 @@ following these steps:
 If you're having an issue with the bug tracker or the mailing list, you can
 contact the webmaster, Hiroshi SHIBATA (hsbt@ruby-lang.org).
 
-You can report issues with ruby-lang.org on the 
+You can report issues with ruby-lang.org on the
 [repo's issue tracker](https://github.com/ruby/www.ruby-lang.org/issues).
 
 ## Requesting features
@@ -45,8 +45,8 @@ write a proposal on [the Redmine issue tracker](https://bugs.ruby-lang.org/proje
 When you open the issue, select `Feature` in the Tracker dropdown.
 
 When writing a proposal, be sure to check for previous discussions on the
-topic and have a solid use case. You should also consider the potential 
-compatibility issues that this new feature might raise. Consider making 
+topic and have a solid use case. You should also consider the potential
+compatibility issues that this new feature might raise. Consider making
 your feature into a gem, and if there are enough people who benefit from
 your feature it could help persuade Ruby core.
 

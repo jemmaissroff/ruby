@@ -28,7 +28,7 @@
 4. Generate the configuration files and build:
 
     ```
-    ./autogen.sh 
+    ./autogen.sh
     mkdir build && cd build # its good practice to build outside of source dir
     mkdir ~/.rubies # we will install to .rubies/ruby-master in our home dir
     ../configure --prefix="${HOME}/.rubies/ruby-master"
