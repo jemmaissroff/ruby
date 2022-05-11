@@ -17,8 +17,8 @@ Here are some general rules to follow when writing Ruby and C code for CRuby:
 * Do not change code unrelated to your pull request (including style fixes)
 * Indent 4 spaces for C without tabs (tabs are two levels of indentation, equivalent to 8 spaces)
 * Indent 2 spaces for Ruby without tabs
-* ANSI C style for 1.9+ for function declarations
-* Follow C90 (not C99) Standard
+* ANSI C style for function declarations
+* Follow C99 Standard
 * PascalStyle for class/module names
 * UNDERSCORE_SEPARATED_UPPER_CASE for other constants
 * Abbreviations should be all upper case

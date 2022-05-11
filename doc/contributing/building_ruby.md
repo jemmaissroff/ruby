@@ -13,24 +13,21 @@
 2. Install optional, recommended dependencies:
 
     * OpenSSL/LibreSSL
-    * readline/editline(libedit
+    * readline/editline (libedit)
     * zlib
     * libffi
     * libyaml
     * libexecinfo (FreeBSD)
-    * NDBM/QDBM
-    * GDBM
 
 3. Checkout the CRuby source code:
 
     ```
-    git clone https://github.com/ruby/ruby.git ruby-master
+    git clone https://github.com/ruby/ruby.git
     ```
 
 4. Generate the configuration files and build:
 
     ```
-    cd ruby-master
     ./autogen.sh 
     mkdir build && cd build # its good practice to build outside of source dir
     mkdir ~/.rubies # we will install to .rubies/ruby-master in our home dir
