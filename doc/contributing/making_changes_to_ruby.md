@@ -4,13 +4,13 @@ Most Ruby documentation lives in the source files and is written in [rdoc format
 
 Some pages live under the `doc` folder and can be written in either `rdoc` or `markdown` format, determined by the file extension.
 
-To generate the output of documentation changes in HTML in the `{build folder}/.ext/html` directory, run
+To generate the output of documentation changes in HTML in the `{build folder}/.ext/html` directory, run the following inside your build directory:
 
 ```
 make html
 ```
 
-under your build folder. Then you can preview your changes by opening `{build folder}/.ext/html/index.html` file in your browser.
+Then you can preview your changes by opening `{build folder}/.ext/html/index.html` file in your browser.
 
 # Contributing a pull request
 
