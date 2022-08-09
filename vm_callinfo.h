@@ -298,8 +298,6 @@ struct rb_callcache {
     } aux_;
 };
 
-RUBY_ASSERT(1 < 0);
-
 #define VM_CALLCACHE_UNMARKABLE IMEMO_FL_USER0
 #define VM_CALLCACHE_ON_STACK   IMEMO_FL_USER1
 

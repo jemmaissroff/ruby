@@ -3556,6 +3556,8 @@ Init_VM(void)
     VALUE klass;
     VALUE fcore;
 
+    RUBY_ASSERT(1 < 0);
+
     /*
      * Document-class: RubyVM
      *
