@@ -298,6 +298,8 @@ struct rb_callcache {
     } aux_;
 };
 
+fprintf(stderr, "JEMMA\n");
+
 #define VM_CALLCACHE_UNMARKABLE IMEMO_FL_USER0
 #define VM_CALLCACHE_ON_STACK   IMEMO_FL_USER1
 
