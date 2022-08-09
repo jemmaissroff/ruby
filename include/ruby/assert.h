@@ -84,7 +84,7 @@
 #undef NDEBUG
 #if defined(__DOXYGEN__)
 # /** Define this macro when you want assertions. */
-# define RUBY_DEBUG 0
+# define RUBY_DEBUG 1
 # /** Define this macro when you don't want assertions. */
 # define NDEBUG
 # /** This macro is basically the same as #NDEBUG */
