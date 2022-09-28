@@ -1432,7 +1432,7 @@ rb_ensure_generic_iv_list_size(VALUE obj, uint32_t newsize)
 }
 
 void
-rb_init_iv_list(VALUE obj)
+rb_grow_iv_list(VALUE obj)
 {
     uint32_t newsize = rb_shape_get_shape(obj)->iv_count * 2.0;
     uint32_t len = ROBJECT_NUMIV(obj);
@@ -1630,6 +1630,7 @@ iterate_over_shapes_with_callback(rb_shape_t *shape, VALUE* iv_list, rb_ivar_for
                 callback(shape->edge_name, val, arg);
             }
             return;
+        case SHAPE_CAPACITY_CHANGE:
         case SHAPE_IVAR_UNDEF:
         case SHAPE_FROZEN:
             iterate_over_shapes_with_callback(shape->parent, iv_list, callback, arg);

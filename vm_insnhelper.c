@@ -1269,27 +1269,32 @@ vm_setivar_slowpath(VALUE obj, ID id, VALUE val, const rb_iseq_t *iseq, IVC ic, 
                 shape_id_t current_shape_id = ROBJECT_SHAPE_ID(obj);
                 shape_id_t next_shape_id = current_shape_id;
 
-                rb_shape_t* next_shape = rb_shape_get_next(shape, obj, id);
+                bool grew_iv_list = false;
 
-                if (shape != next_shape) {
-                    rb_shape_set_shape(obj, next_shape);
-                    next_shape_id = ROBJECT_SHAPE_ID(obj);
-                }
+                if (!rb_shape_get_iv_index(shape, id, &index)) {
+                    index = shape->iv_count;
 
-                if (rb_shape_get_iv_index(next_shape, id, &index)) { // based off the hash stored in the transition tree
                     if (index >= MAX_IVARS) {
                         rb_raise(rb_eArgError, "too many instance variables");
                     }
 
-                    populate_cache(index, current_shape_id, next_shape_id, id, iseq, ic, cc, is_attr);
-                }
-                else {
-                    rb_bug("Didn't find instance variable %s\n", rb_id2name(id));
+                    // Ensure the IV buffer is wide enough to store the IV
+                    if (UNLIKELY(index >= num_iv)) {
+                        populate_cache(index, INVALID_SHAPE_ID, INVALID_SHAPE_ID, id, iseq, ic, cc, is_attr);
+                        rb_grow_iv_list(obj);
+                        shape = rb_shape_transition_shape_capa(shape);
+                        rb_shape_set_shape(obj, shape);
+                        grew_iv_list = true;
+                    }
+
+                    // Do IV transition from either capa shape or non-capa shape
+                    rb_shape_t* next_shape = rb_shape_get_next(shape, obj, id);
+                    rb_shape_set_shape(obj, next_shape);
+                    next_shape_id = ROBJECT_SHAPE_ID(obj);
                 }
 
-                // Ensure the IV buffer is wide enough to store the IV
-                if (UNLIKELY(index >= num_iv)) {
-                    rb_init_iv_list(obj);
+                if (!grew_iv_list) {
+                    populate_cache(index, current_shape_id, next_shape_id, id, iseq, ic, cc, is_attr);
                 }
 
                 VALUE *ptr = ROBJECT_IVPTR(obj);
@@ -1401,10 +1406,7 @@ vm_setivar(VALUE obj, ID id, VALUE val, shape_id_t source_shape_id, shape_id_t d
                     VM_ASSERT(!rb_ractor_shareable_p(obj));
 
                     if (dest_shape_id != shape_id) {
-                        if (UNLIKELY(index >= ROBJECT_NUMIV(obj))) {
-                            rb_init_iv_list(obj);
-                        }
-                        ROBJECT_SET_SHAPE_ID(obj, dest_shape_id);
+                       ROBJECT_SET_SHAPE_ID(obj, dest_shape_id);
                     }
 
                     RUBY_ASSERT(index < ROBJECT_NUMIV(obj));
