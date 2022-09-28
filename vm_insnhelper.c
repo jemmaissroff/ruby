@@ -1113,7 +1113,7 @@ vm_getivar(VALUE obj, ID id, const rb_iseq_t *iseq, IVC ic, const struct rb_call
     shape_id_t shape_id;
     VALUE * ivar_list;
 
-    if (SPECIAL_CONST_P(obj)) {
+    if (UNLIKELY(SPECIAL_CONST_P(obj))) {
         return Qnil;
     }
 
