@@ -4057,11 +4057,9 @@ Init_vm_objects(void)
     vm->root_shape = rb_shape_alloc(0, 0);
     RUBY_ASSERT(rb_shape_id(vm->root_shape) == ROOT_SHAPE_ID);
 
-    // Frozen root shape
-    vm->frozen_root_shape = rb_shape_alloc(rb_make_internal_id(), vm->root_shape);
-    vm->frozen_root_shape->type = (uint8_t)SHAPE_FROZEN;
-    RUBY_ASSERT(rb_shape_id(vm->frozen_root_shape) == FROZEN_ROOT_SHAPE_ID);
+    vm->id_frozen = rb_make_internal_id();
 
+    // SHAPE_ID 1 is reserved for FROZEN_ROOT_SHAPE_ID
     vm->next_shape_id = 2;
 }
 

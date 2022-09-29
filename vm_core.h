@@ -693,7 +693,7 @@ typedef struct rb_vm_struct {
     /* object shapes */
     rb_shape_t *shape_list;
     rb_shape_t *root_shape;
-    rb_shape_t *frozen_root_shape;
+    ID id_frozen;
     shape_id_t next_shape_id;
 
     /* load */

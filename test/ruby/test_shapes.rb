@@ -65,13 +65,6 @@ class TestShapes < Test::Unit::TestCase
     assert_shape_equal(RubyVM.debug_root_shape, RubyVM.debug_shape(Object.new))
   end
 
-  def test_frozen_new_obj_has_frozen_root_shape
-    assert_shape_equal(
-      RubyVM.debug_frozen_root_shape,
-      RubyVM.debug_shape(Object.new.freeze)
-    )
-  end
-
   def test_str_has_root_shape
     assert_shape_equal(RubyVM.debug_root_shape, RubyVM.debug_shape(""))
   end
@@ -82,14 +75,6 @@ class TestShapes < Test::Unit::TestCase
 
   def test_hash_has_root_shape
     assert_shape_equal(RubyVM.debug_root_shape, RubyVM.debug_shape({}))
-  end
-
-  def test_true_has_frozen_root_shape
-    assert_shape_equal(RubyVM.debug_frozen_root_shape, RubyVM.debug_shape(true))
-  end
-
-  def test_nil_has_frozen_root_shape
-    assert_shape_equal(RubyVM.debug_frozen_root_shape, RubyVM.debug_shape(nil))
   end
 
   def test_basic_shape_transition
