@@ -138,6 +138,7 @@
 #include "ractor_core.h"
 
 #include "builtin.h"
+#include "shape.h"
 
 #define rb_setjmp(env) RUBY_SETJMP(env)
 #define rb_jmp_buf rb_jmpbuf_t
@@ -3809,9 +3810,8 @@ Init_heap(void)
 void
 Init_gc_stress(void)
 {
-    rb_objspace_t *objspace = &rb_objspace;
-
-    gc_stress_set(objspace, ruby_initial_gc_stress);
+   rb_objspace_t *objspace = &rb_objspace;
+   gc_stress_set(objspace, ruby_initial_gc_stress);
 }
 
 typedef int each_obj_callback(void *, void *, size_t, void *);
