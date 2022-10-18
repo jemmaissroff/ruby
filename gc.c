@@ -2951,6 +2951,12 @@ rb_class_instance_allocate_internal(VALUE klass, VALUE flags, bool wb_protected)
         ptr[i] = Qundef;
     }
 #endif
+/* JEM ???
+    else {
+        rb_ensure_iv_list_size(obj, ROBJECT_NUMIV(obj), index_tbl_num_entries);
+    }
+>>>>>>> 122794076b (Set ivars individually on dups allocated out of different size_pools)
+    */
 
     return obj;
 }
