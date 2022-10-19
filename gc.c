@@ -2921,7 +2921,6 @@ rb_class_instance_allocate_internal(VALUE klass, VALUE flags, bool wb_protected)
 
 #if USE_RVARGC
     uint32_t capa = (uint32_t)((rb_gc_obj_slot_size(obj) - offsetof(struct RObject, as.ary)) / sizeof(VALUE));
-    GC_ASSERT(capa >= index_tbl_num_entries);
 
     ROBJECT(obj)->numiv = capa;
 #endif
