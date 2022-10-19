@@ -49,14 +49,7 @@ static rb_control_frame_t *vm_get_ruby_level_caller_cfp(const rb_execution_conte
 MJIT_STATIC VALUE
 ruby_vm_special_exception_copy(VALUE exc)
 {
-    VALUE e = rb_obj_alloc(rb_class_real(RBASIC_CLASS(exc)));
-    rb_shape_t * shape = rb_shape_get_shape(exc);
-    if (rb_shape_frozen_shape_p(shape)) {
-        shape = rb_shape_get_shape_by_id(shape->parent_id);
-    }
-    rb_shape_set_shape(e, shape);
-    rb_obj_copy_ivar(e, exc);
-    return e;
+    return rb_obj_dup(exc);
 }
 
 NORETURN(static void ec_stack_overflow(rb_execution_context_t *ec, int));
