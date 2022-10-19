@@ -1404,9 +1404,6 @@ rb_ensure_iv_list_size(VALUE obj, uint32_t current_capacity, uint32_t new_capaci
         newptr = obj_ivar_heap_realloc(obj, current_capacity, new_capacity);
     }
 
-    for (; current_capacity < new_capacity; current_capacity++) {
-        newptr[current_capacity] = Qundef;
-    }
 #if USE_RVARGC
     ROBJECT(obj)->numiv = new_capacity;
 #else

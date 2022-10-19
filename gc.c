@@ -1361,6 +1361,27 @@ tick(void)
     return val;
 }
 
+/* Implementation for macOS PPC by @nobu
+ * See: https://github.com/ruby/ruby/pull/5975#discussion_r890045558
+ */
+#elif defined(__POWERPC__) && defined(__APPLE__)
+typedef unsigned long long tick_t;
+#define PRItick "llu"
+
+static __inline__ tick_t
+tick(void)
+{
+    unsigned long int upper, lower, tmp;
+    # define mftbu(r) __asm__ volatile("mftbu   %0" : "=r"(r))
+    # define mftb(r)  __asm__ volatile("mftb    %0" : "=r"(r))
+        do {
+            mftbu(upper);
+            mftb(lower);
+            mftbu(tmp);
+        } while (tmp != upper);
+    return ((tick_t)upper << 32) | lower;
+}
+
 #elif defined(__aarch64__) &&  defined(__GNUC__)
 typedef unsigned long tick_t;
 #define PRItick "lu"
@@ -2913,21 +2934,17 @@ rb_class_instance_allocate_internal(VALUE klass, VALUE flags, bool wb_protected)
     size = sizeof(struct RObject);
 #endif
 
-#if USE_RVARGC
     VALUE obj = newobj_of(klass, flags, 0, 0, 0, wb_protected, size);
-#else
-    VALUE obj = newobj_of(klass, flags, Qundef, Qundef, Qundef, wb_protected, size);
-#endif
 
 #if USE_RVARGC
     uint32_t capa = (uint32_t)((rb_gc_obj_slot_size(obj) - offsetof(struct RObject, as.ary)) / sizeof(VALUE));
-
     ROBJECT(obj)->numiv = capa;
 #endif
 
-#if USE_RVARGC
+#if RUBY_DEBUG
+    VALUE *ptr = ROBJECT_IVPTR(obj);
     for (size_t i = 0; i < ROBJECT_NUMIV(obj); i++) {
-        ROBJECT(obj)->as.ary[i] = Qundef;
+        ptr[i] = Qundef;
     }
 #endif
 
@@ -10008,11 +10025,6 @@ gc_ref_update_object(rb_objspace_t *objspace, VALUE v)
 
         uint32_t capa = (uint32_t)((slot_size - offsetof(struct RObject, as.ary)) / sizeof(VALUE));
         ROBJECT(v)->numiv = capa;
-
-        // Fill end with Qundef
-        for (uint32_t i = numiv; i < capa; i++) {
-            ptr[i] = Qundef;
-        }
     }
 #endif
 
