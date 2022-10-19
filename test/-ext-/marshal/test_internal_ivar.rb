@@ -6,6 +6,20 @@ module Bug end
 
 module Bug::Marshal
   class TestInternalIVar < Test::Unit::TestCase
+    class InternalIV2 < InternalIVar ; end
+
+    def test_internal_ivar_dup
+      v = InternalIV2.new("hello", "world", "bye")
+      m = v.dup
+
+      assert_equal(v.instance_variables, [])
+      assert_equal(m.instance_variables, [])
+
+      assert_equal("hello", m.normal)
+      assert_equal("world", m.internal)
+      assert_equal("bye", m.encoding_short)
+    end
+
     def test_marshal
       v = InternalIVar.new("hello", "world", "bye")
       assert_equal("hello", v.normal)
