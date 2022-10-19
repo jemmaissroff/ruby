@@ -20,12 +20,6 @@ rb_shape_id(rb_shape_t * shape)
     return (shape_id_t)(shape - GET_VM()->shape_list);
 }
 
-static rb_shape_t*
-rb_shape_get_frozen_root_shape(void)
-{
-    return GET_VM()->frozen_root_shape;
-}
-
 bool
 rb_shape_root_shape_p(rb_shape_t* shape)
 {
@@ -195,16 +189,16 @@ rb_shape_transition_shape_frozen(VALUE obj)
     rb_shape_t* next_shape;
 
     if (shape == rb_shape_get_root_shape()) {
-        next_shape = rb_shape_get_frozen_root_shape();
+        rb_shape_set_shape_id(obj, FROZEN_ROOT_SHAPE_ID);
+        return;
     }
-    else {
-        static ID id_frozen;
-        if (!id_frozen) {
-            id_frozen = rb_make_internal_id();
-        }
 
-        next_shape = get_next_shape_internal(shape, (ID)id_frozen, SHAPE_FROZEN);
+    static ID id_frozen;
+    if (!id_frozen) {
+        id_frozen = rb_make_internal_id();
     }
+
+    next_shape = get_next_shape_internal(shape, (ID)id_frozen, SHAPE_FROZEN);
 
     RUBY_ASSERT(next_shape);
     rb_shape_set_shape(obj, next_shape);
@@ -482,12 +476,6 @@ rb_shape_root_shape(VALUE self)
     return rb_shape_t_to_rb_cShape(rb_shape_get_root_shape());
 }
 
-static VALUE
-rb_shape_frozen_root_shape(VALUE self)
-{
-    return rb_shape_t_to_rb_cShape(rb_shape_get_frozen_root_shape());
-}
-
 VALUE rb_obj_shape(rb_shape_t* shape);
 
 static enum rb_id_table_iterator_result collect_keys_and_values(ID key, VALUE value, void *ref)
@@ -573,6 +561,5 @@ Init_shape(void)
     rb_define_singleton_method(rb_cShape, "next_shape_id", next_shape_id, 0);
     rb_define_singleton_method(rb_cShape, "of", rb_shape_debug_shape, 1);
     rb_define_singleton_method(rb_cShape, "root_shape", rb_shape_root_shape, 0);
-    rb_define_singleton_method(rb_cShape, "frozen_root_shape", rb_shape_frozen_root_shape, 0);
 #endif
 }

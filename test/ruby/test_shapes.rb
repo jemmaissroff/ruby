@@ -115,10 +115,12 @@ class TestShapes < Test::Unit::TestCase
   end
 
   def test_true_has_frozen_root_shape
+    pend "move to generic shape"
     assert_shape_equal(RubyVM::Shape.frozen_root_shape, RubyVM::Shape.of(true))
   end
 
   def test_nil_has_frozen_root_shape
+    pend "move to generic shape"
     assert_shape_equal(RubyVM::Shape.frozen_root_shape, RubyVM::Shape.of(nil))
   end
 
