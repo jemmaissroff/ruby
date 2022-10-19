@@ -1092,7 +1092,7 @@ rb_generic_shape_id(VALUE obj)
             shape_id = ivtbl->shape_id;
         }
         else if (OBJ_FROZEN(obj)) {
-            shape_id = FROZEN_ROOT_SHAPE_ID;
+            shape_id = SPECIAL_CONST_SHAPE_ID;
         }
     }
     RB_VM_LOCK_LEAVE();
@@ -1500,7 +1500,7 @@ rb_shape_set_shape_id(VALUE obj, shape_id_t shape_id)
         RCLASS_EXT(obj)->shape_id = shape_id;
         break;
       default:
-        if (shape_id != FROZEN_ROOT_SHAPE_ID) {
+        if (shape_id != SPECIAL_CONST_SHAPE_ID) {
             struct gen_ivtbl *ivtbl = 0;
             RB_VM_LOCK_ENTER();
             {

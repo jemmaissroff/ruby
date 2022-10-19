@@ -60,7 +60,7 @@ shape_id_t
 rb_shape_get_shape_id(VALUE obj)
 {
     if (RB_SPECIAL_CONST_P(obj)) {
-        return FROZEN_ROOT_SHAPE_ID;
+        return SPECIAL_CONST_SHAPE_ID;
     }
 
 #if SHAPE_IN_BASIC_FLAGS
@@ -189,7 +189,7 @@ rb_shape_transition_shape_frozen(VALUE obj)
     rb_shape_t* next_shape;
 
     if (shape == rb_shape_get_root_shape()) {
-        rb_shape_set_shape_id(obj, FROZEN_ROOT_SHAPE_ID);
+        rb_shape_set_shape_id(obj, SPECIAL_CONST_SHAPE_ID);
         return;
     }
 
@@ -555,6 +555,7 @@ Init_shape(void)
     rb_define_const(rb_cShape, "SHAPE_FROZEN", INT2NUM(SHAPE_FROZEN));
     rb_define_const(rb_cShape, "SHAPE_BITS", INT2NUM(SHAPE_BITS));
     rb_define_const(rb_cShape, "SHAPE_FLAG_SHIFT", INT2NUM(SHAPE_FLAG_SHIFT));
+    rb_define_const(rb_cShape, "SPECIAL_CONST_SHAPE_ID", INT2NUM(SPECIAL_CONST_SHAPE_ID));
 
     rb_define_singleton_method(rb_cShape, "transition_tree", shape_transition_tree, 0);
     rb_define_singleton_method(rb_cShape, "find_by_id", rb_shape_find_by_id, 1);

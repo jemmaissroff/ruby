@@ -114,14 +114,12 @@ class TestShapes < Test::Unit::TestCase
     )
   end
 
-  def test_true_has_frozen_root_shape
-    pend "move to generic shape"
-    assert_shape_equal(RubyVM::Shape.frozen_root_shape, RubyVM::Shape.of(true))
+  def test_true_has_special_const_shape_id
+    assert_equal(RubyVM::Shape::SPECIAL_CONST_SHAPE_ID, RubyVM::Shape.of(true).id)
   end
 
-  def test_nil_has_frozen_root_shape
-    pend "move to generic shape"
-    assert_shape_equal(RubyVM::Shape.frozen_root_shape, RubyVM::Shape.of(nil))
+  def test_nil_has_special_const_shape_id
+    assert_equal(RubyVM::Shape::SPECIAL_CONST_SHAPE_ID, RubyVM::Shape.of(nil).id)
   end
 
   def test_basic_shape_transition
