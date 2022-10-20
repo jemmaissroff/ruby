@@ -3819,8 +3819,9 @@ Init_heap(void)
 void
 Init_gc_stress(void)
 {
-   rb_objspace_t *objspace = &rb_objspace;
-   gc_stress_set(objspace, ruby_initial_gc_stress);
+    rb_objspace_t *objspace = &rb_objspace;
+
+    gc_stress_set(objspace, ruby_initial_gc_stress);
 }
 
 typedef int each_obj_callback(void *, void *, size_t, void *);
