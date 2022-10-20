@@ -268,13 +268,7 @@ rb_obj_singleton_class(VALUE obj)
 MJIT_FUNC_EXPORTED void
 rb_obj_copy_ivar(VALUE dest, VALUE obj)
 {
-    uint32_t dest_capacity = ROBJECT_NUMIV(dest);
-    uint32_t src_num_ivs = ROBJECT_IV_COUNT(obj);
-
-    if (dest_capacity < src_num_ivs) {
-        rb_ensure_iv_list_size(dest, dest_capacity, src_num_ivs);
-        RUBY_ASSERT(!(RBASIC(dest)->flags & ROBJECT_EMBED));
-    }
+    RUBY_ASSERT(ROBJECT_NUMIV(dest) >= ROBJECT_IV_COUNT(obj));
 
     VALUE * dest_buf = ROBJECT_IVPTR(dest);
     VALUE * src_buf = ROBJECT_IVPTR(obj);
@@ -324,7 +318,9 @@ init_copy(VALUE dest, VALUE obj)
         // they will not make the same shape transitions.
         // In this case we set ivars one by one to ensure dest
         // has the correct shape
-        rb_ivar_foreach(obj, ivar_set_i, (st_data_t)dest);
+        if (RB_TYPE_P(obj, T_OBJECT)) {
+            rb_ivar_foreach(obj, ivar_set_i, (st_data_t)dest);
+        }
     }
 }
 

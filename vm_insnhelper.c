@@ -46,6 +46,18 @@ static const struct rb_callcache vm_empty_cc_for_super;
 
 static rb_control_frame_t *vm_get_ruby_level_caller_cfp(const rb_execution_context_t *ec, const rb_control_frame_t *cfp);
 
+static void
+rb_obj_ensure_capacity(VALUE dest, VALUE obj)
+{
+    uint32_t dest_capacity = ROBJECT_NUMIV(dest);
+    uint32_t src_num_ivs = ROBJECT_IV_COUNT(obj);
+
+    if (dest_capacity < src_num_ivs) {
+        rb_ensure_iv_list_size(dest, dest_capacity, src_num_ivs);
+        RUBY_ASSERT(!(RBASIC(dest)->flags & ROBJECT_EMBED));
+    }
+}
+
 MJIT_STATIC VALUE
 ruby_vm_special_exception_copy(VALUE exc)
 {
@@ -55,6 +67,7 @@ ruby_vm_special_exception_copy(VALUE exc)
         shape = rb_shape_get_shape_by_id(shape->parent_id);
     }
     rb_shape_set_shape(e, shape);
+    rb_obj_ensure_capacity(e, exc);
     rb_obj_copy_ivar(e, exc);
     return e;
 }
