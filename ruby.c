@@ -64,6 +64,7 @@
 
 #define singlebit_only_p(x) !((x) & ((x)-1))
 STATIC_ASSERT(Qnil_1bit_from_Qfalse, singlebit_only_p(Qnil^Qfalse));
+STATIC_ASSERT(Qundef_1bit_from_Qnil, singlebit_only_p(Qundef^Qnil));
 
 #ifndef MAXPATHLEN
 # define MAXPATHLEN 1024
@@ -1613,8 +1614,13 @@ ruby_opt_init(ruby_cmdline_options_t *opt)
 
 #if USE_MJIT
     // rb_call_builtin_inits depends on RubyVM::MJIT.enabled?
-    if (opt->mjit.on)
+    if (opt->mjit.on) {
         mjit_enabled = true;
+        // rb_threadptr_root_fiber_setup for the initial thread is called before rb_yjit_enabled_p()
+        // or mjit_enabled becomes true, meaning jit_cont_new is skipped for the initial root fiber.
+        // Therefore we need to call this again here to set the initial root fiber's jit_cont.
+        rb_jit_cont_init(); // must be after mjit_enabled = true
+    }
 #endif
 
     Init_ext(); /* load statically linked extensions before rubygems */
@@ -1622,12 +1628,6 @@ ruby_opt_init(ruby_cmdline_options_t *opt)
     rb_call_builtin_inits();
     ruby_init_prelude();
 
-    // Make sure the saved_ec of the initial thread's root_fiber is scanned by rb_jit_cont_each_ec.
-    //
-    // rb_threadptr_root_fiber_setup for the initial thread is called before rb_yjit_enabled_p()
-    // or mjit_enabled becomes true, meaning jit_cont_new is skipped for the root_fiber.
-    // Therefore we need to call this again here to set the root_fiber's jit_cont.
-    rb_fiber_init_jit_cont(GET_EC()->fiber_ptr);
 #if USE_MJIT
     // mjit_init is safe only after rb_call_builtin_inits defines RubyVM::MJIT::Compiler
     if (opt->mjit.on)
@@ -1922,6 +1922,10 @@ process_options(int argc, char **argv, ruby_cmdline_options_t *opt)
 #if USE_YJIT
     if (FEATURE_SET_P(opt->features, yjit)) {
         rb_yjit_init();
+        // rb_threadptr_root_fiber_setup for the initial thread is called before rb_yjit_enabled_p()
+        // or mjit_enabled becomes true, meaning jit_cont_new is skipped for the initial root fiber.
+        // Therefore we need to call this again here to set the initial root fiber's jit_cont.
+        rb_jit_cont_init(); // must be after rb_yjit_init(), but before parsing options raises an exception.
     }
 #endif
 #if USE_MJIT
