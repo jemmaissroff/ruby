@@ -204,37 +204,27 @@ rb_shape_transition_shape_frozen(VALUE obj)
     rb_shape_set_shape(obj, next_shape);
 }
 
-void
-rb_shape_transition_shape(VALUE obj, ID id, rb_shape_t *shape)
-{
-    rb_shape_t* next_shape = rb_shape_get_next(shape, obj, id);
-    if (shape == next_shape) {
-        return;
-    }
-    rb_shape_set_shape(obj, next_shape);
-}
-
 /*
  * This function is used for assertions where we don't want to increment
  * max_iv_count
  */
 rb_shape_t *
-rb_shape_get_next_no_side_effects(rb_shape_t* shape, VALUE obj, ID id)
+rb_shape_get_next(rb_shape_t* shape, VALUE obj, ID id)
 {
     return get_next_shape_internal(shape, id, SHAPE_IVAR);
 }
 
 rb_shape_t*
-rb_shape_get_next(rb_shape_t* shape, VALUE obj, ID id)
+rb_shape_get_next_for_object(rb_shape_t* shape, VALUE obj, ID id)
 {
-    rb_shape_t * new_shape = rb_shape_get_next_no_side_effects(shape, obj, id);
+    RUBY_ASSERT(BUILTIN_TYPE(obj) == T_OBJECT);
+
+    rb_shape_t * new_shape = rb_shape_get_next(shape, obj, id);
 
     // Check if we should update max_iv_count on the object's class
-    if (BUILTIN_TYPE(obj) == T_OBJECT) {
-        VALUE klass = rb_obj_class(obj);
-        if (new_shape->iv_count > RCLASS_EXT(klass)->max_iv_count) {
-            RCLASS_EXT(klass)->max_iv_count = new_shape->iv_count;
-        }
+    VALUE klass = rb_obj_class(obj);
+    if (new_shape->iv_count > RCLASS_EXT(klass)->max_iv_count) {
+        RCLASS_EXT(klass)->max_iv_count = new_shape->iv_count;
     }
 
     return new_shape;

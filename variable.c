@@ -1450,7 +1450,7 @@ obj_ivar_set(VALUE obj, ID id, VALUE val)
     rb_shape_t * shape = rb_shape_get_shape_by_id(ROBJECT_SHAPE_ID(obj));
 
     if (!rb_shape_get_iv_index(shape, id, &index)) {
-        shape = rb_shape_get_next(shape, obj, id);
+        shape = rb_shape_get_next_for_object(shape, obj, id);
         index = shape->iv_count - 1;
     }
 
