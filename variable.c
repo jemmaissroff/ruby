@@ -1603,19 +1603,20 @@ static void
 iterate_over_shapes_with_callback(rb_shape_t *shape, VALUE* iv_list, rb_ivar_foreach_callback_func *callback, st_data_t arg)
 {
     switch ((enum shape_type)shape->type) {
-      case SHAPE_ROOT:
-        return;
-      case SHAPE_IVAR:
-        iterate_over_shapes_with_callback(rb_shape_get_shape_by_id(shape->parent_id), iv_list, callback, arg);
-        VALUE val = iv_list[shape->next_iv_index - 1];
-        if (val != Qundef) {
-            callback(shape->edge_name, val, arg);
-        }
-        return;
-      case SHAPE_IVAR_UNDEF:
-      case SHAPE_FROZEN:
-        iterate_over_shapes_with_callback(rb_shape_get_shape_by_id(shape->parent_id), iv_list, callback, arg);
-        return;
+        case SHAPE_ROOT:
+            return;
+        case SHAPE_IVAR:
+            iterate_over_shapes_with_callback(rb_shape_get_shape_by_id(shape->parent_id), iv_list, callback, arg);
+            VALUE val = iv_list[shape->next_iv_index - 1];
+            if (val != Qundef) {
+                callback(shape->edge_name, val, arg);
+            }
+            return;
+        case SHAPE_CAPACITY_CHANGE:
+        case SHAPE_IVAR_UNDEF:
+        case SHAPE_FROZEN:
+            iterate_over_shapes_with_callback(rb_shape_get_shape_by_id(shape->parent_id), iv_list, callback, arg);
+            return;
     }
 }
 
