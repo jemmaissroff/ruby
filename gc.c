@@ -3440,7 +3440,7 @@ obj_free(rb_objspace_t *objspace, VALUE obj)
                 VALUE klass = RBASIC_CLASS(obj);
 
                 // Increment max_iv_count if applicable, used to determine size pool allocation
-                uint32_t num_of_ivs = shape->iv_count;
+                uint32_t num_of_ivs = shape->next_iv_index;
                 if (RCLASS_EXT(klass)->max_iv_count < num_of_ivs) {
                     RCLASS_EXT(klass)->max_iv_count = num_of_ivs;
                 }
@@ -3469,9 +3469,6 @@ obj_free(rb_objspace_t *objspace, VALUE obj)
         if (FL_TEST_RAW(obj, RCLASS_SUPERCLASSES_INCLUDE_SELF)) {
             xfree(RCLASS_SUPERCLASSES(obj));
         }
-#if SIZEOF_SERIAL_T != SIZEOF_VALUE && USE_RVARGC
-        xfree(RCLASS(obj)->class_serial_ptr);
-#endif
 
 #if !USE_RVARGC
         if (RCLASS_EXT(obj))
@@ -8926,8 +8923,10 @@ rb_gc_writebarrier(VALUE a, VALUE b)
 {
     rb_objspace_t *objspace = &rb_objspace;
 
-    if (RGENGC_CHECK_MODE && SPECIAL_CONST_P(a)) rb_bug("rb_gc_writebarrier: a is special const");
-    if (RGENGC_CHECK_MODE && SPECIAL_CONST_P(b)) rb_bug("rb_gc_writebarrier: b is special const");
+    if (RGENGC_CHECK_MODE) {
+        if (SPECIAL_CONST_P(a)) rb_bug("rb_gc_writebarrier: a is special const: %"PRIxVALUE, a);
+        if (SPECIAL_CONST_P(b)) rb_bug("rb_gc_writebarrier: b is special const: %"PRIxVALUE, b);
+    }
 
   retry:
     if (!is_incremental_marking(objspace)) {

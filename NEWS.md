@@ -184,6 +184,9 @@ Note: We're only listing outstanding class updates.
 * Refinement
     * Refinement#refined_class has been added. [[Feature #12737]]
 
+* RubyVM::AbstractSyntaxTree
+    * Add `error_tolerant` option for `parse`, `parse_file` and `of`. [[Feature #19013]]
+
 * Set
     * Set is now available as a built-in class without the need for `require "set"`. [[Feature #16989]]
       It is currently autoloaded via the `Set` constant or a call to `Enumerable#to_set`.
@@ -238,7 +241,7 @@ Note: We're only listing outstanding class updates.
     * irb 1.4.2
     * json 2.6.2
     * logger 1.5.1
-    * net-http 0.2.2
+    * net-http 0.3.0
     * net-protocol 0.1.3
     * openssl 3.1.0.pre
     * ostruct 0.5.5
@@ -259,7 +262,7 @@ Note: We're only listing outstanding class updates.
     * net-smtp 0.3.2
     * rbs 2.7.0
     * typeprof 0.21.3
-    * debug 1.6.2
+    * debug 1.6.3
 *   The following default gems are now bundled gems.
 
 ## Compatibility issues
