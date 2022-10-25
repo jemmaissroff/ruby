@@ -238,8 +238,8 @@ rb_shape_get_next(rb_shape_t* shape, VALUE obj, ID id)
     // Check if we should update max_iv_count on the object's class
     if (BUILTIN_TYPE(obj) == T_OBJECT) {
         VALUE klass = rb_obj_class(obj);
-        if (new_shape->iv_count > RCLASS_EXT(klass)->max_iv_count) {
-            RCLASS_EXT(klass)->max_iv_count = new_shape->iv_count;
+        if (new_shape->next_iv_index > RCLASS_EXT(klass)->max_iv_count) {
+            RCLASS_EXT(klass)->max_iv_count = new_shape->next_iv_index;
         }
     }
 

@@ -326,9 +326,6 @@ init_copy(VALUE dest, VALUE obj)
         // has the correct shape
         rb_ivar_foreach(obj, ivar_set_i, (st_data_t)dest);
     }
-
-    // shape ids are different
-    rb_shape_set_shape(dest, shape_to_set);
 }
 
 static VALUE immutable_obj_clone(VALUE obj, VALUE kwfreeze);
