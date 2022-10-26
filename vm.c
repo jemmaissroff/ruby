@@ -4044,13 +4044,6 @@ Init_vm_objects(void)
     if (!vm->shape_list) {
         rb_memerror();
     }
-
-    // Root shape
-    vm->root_shape = rb_shape_alloc_with_parent_id(0, INVALID_SHAPE_ID);
-    RUBY_ASSERT(rb_shape_id(vm->root_shape) == ROOT_SHAPE_ID);
-
-    // Keep space for SPECIAL_CONST_SHAPE_ID
-    vm->next_shape_id = 2;
 }
 
 /* Stub for builtin function when not building YJIT units*/

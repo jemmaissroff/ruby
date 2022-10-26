@@ -40,7 +40,7 @@ typedef uint16_t shape_id_t;
 # define MAX_SHAPE_ID (SHAPE_MASK - 1)
 # define INVALID_SHAPE_ID SHAPE_MASK
 # define ROOT_SHAPE_ID 0x0
-# define SPECIAL_CONST_SHAPE_ID 0x1
+# define SPECIAL_CONST_SHAPE_ID SIZE_POOL_COUNT // We use SIZE_POOL_COUNT number of shape IDs for transitions out of different size pools. The next available shapd ID will be the SPECIAL_CONST_SHAPE_ID
 
 struct rb_shape {
     struct rb_id_table * edges; // id_table from ID (ivar) to next shape
@@ -58,6 +58,7 @@ enum shape_type {
     SHAPE_FROZEN,
     SHAPE_CAPACITY_CHANGE,
     SHAPE_IVAR_UNDEF,
+    SHAPE_SPECIAL_CONST,
 };
 
 #if SHAPE_IN_BASIC_FLAGS
