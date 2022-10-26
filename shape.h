@@ -58,6 +58,7 @@ enum shape_type {
     SHAPE_FROZEN,
     SHAPE_CAPACITY_CHANGE,
     SHAPE_IVAR_UNDEF,
+    SHAPE_SIZE_POOL_CHANGE,
 };
 
 #if SHAPE_IN_BASIC_FLAGS
@@ -129,6 +130,8 @@ rb_shape_t* rb_shape_get_next(rb_shape_t* shape, VALUE obj, ID id);
 bool rb_shape_get_iv_index(rb_shape_t * shape, ID id, attr_index_t * value);
 shape_id_t rb_shape_id(rb_shape_t * shape);
 MJIT_SYMBOL_EXPORT_END
+
+void rb_shape_transition_obj_size_pool_change(VALUE obj, size_t size_pool_index);
 
 static inline uint32_t
 ROBJECT_IV_COUNT(VALUE obj)

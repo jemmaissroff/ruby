@@ -6068,6 +6068,12 @@ invalidate_moved_plane(rb_objspace_t *objspace, struct heap_page *page, uintptr_
                     gc_move(objspace, object, forwarding_object, GET_HEAP_PAGE(object)->slot_size, page->slot_size);
                     /* forwarding_object is now our actual object, and "object"
                      * is the free slot for the original page */
+
+                    rb_shape_t * shape = rb_shape_get_shape(forwarding_object);
+                    if (shape->type == SHAPE_SIZE_POOL_CHANGE) {
+                        rb_shape_set_shape_id(forwarding_object, shape->parent_id);
+                    }
+
                     struct heap_page *orig_page = GET_HEAP_PAGE(object);
                     orig_page->free_slots++;
                     heap_page_add_freeobj(objspace, orig_page, object);
@@ -8383,7 +8389,7 @@ gc_compact_heap_cursors_met_p(rb_heap_t *heap)
 }
 
 static rb_size_pool_t *
-gc_compact_destination_pool(rb_objspace_t *objspace, rb_size_pool_t *src_pool, VALUE src)
+gc_compact_destination_pool(rb_objspace_t *objspace, rb_size_pool_t *src_pool, VALUE src, size_t * idx)
 {
     size_t obj_size;
 
@@ -8405,18 +8411,20 @@ gc_compact_destination_pool(rb_objspace_t *objspace, rb_size_pool_t *src_pool, V
     }
 
     if (rb_gc_size_allocatable_p(obj_size)){
-        return &size_pools[size_pool_idx_for_size(obj_size)];
+        *idx = size_pool_idx_for_size(obj_size);
     }
     else {
-        return &size_pools[0];
+        *idx = 0;
     }
+    return &size_pools[*idx];
 }
 
 static bool
 gc_compact_move(rb_objspace_t *objspace, rb_heap_t *heap, rb_size_pool_t *size_pool, VALUE src)
 {
     GC_ASSERT(BUILTIN_TYPE(src) != T_MOVED);
-    rb_heap_t *dheap = SIZE_POOL_EDEN_HEAP(gc_compact_destination_pool(objspace, size_pool, src));
+    size_t size_pool_index;
+    rb_heap_t *dheap = SIZE_POOL_EDEN_HEAP(gc_compact_destination_pool(objspace, size_pool, src, &size_pool_index));
 
     if (gc_compact_heap_cursors_met_p(dheap)) {
         return dheap != heap;
@@ -8445,6 +8453,12 @@ gc_compact_move(rb_objspace_t *objspace, rb_heap_t *heap, rb_size_pool_t *size_p
         if (gc_compact_heap_cursors_met_p(dheap)) {
             return false;
         }
+    }
+
+    if (BUILTIN_TYPE(src) == T_MOVED && dheap != heap) {
+        VALUE dest = ((struct RMoved *)src)->destination;
+        rb_shape_transition_obj_size_pool_change(dest, size_pool_index);
+        // do our transition on dest
     }
     return true;
 }

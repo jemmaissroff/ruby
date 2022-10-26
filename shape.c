@@ -7,6 +7,7 @@
 #include <stdbool.h>
 
 static ID id_frozen;
+static ID size_pool_edge_names[SIZE_POOL_COUNT];
 
 /*
  * Shape getters
@@ -110,7 +111,6 @@ static rb_shape_t*
 get_next_shape_internal(rb_shape_t* shape, ID id, enum shape_type shape_type)
 {
     rb_shape_t *res = NULL;
-    RUBY_ASSERT(SHAPE_FROZEN != (enum shape_type)shape->type);
     RB_VM_LOCK_ENTER();
     {
         if (rb_shape_lookup_id(shape, id, shape_type)) {
@@ -142,6 +142,7 @@ get_next_shape_internal(rb_shape_t* shape, ID id, enum shape_type shape_type)
                   case SHAPE_CAPACITY_CHANGE:
                   case SHAPE_IVAR_UNDEF:
                   case SHAPE_FROZEN:
+                  case SHAPE_SIZE_POOL_CHANGE:
                     new_shape->next_iv_index = rb_shape_get_shape_by_id(new_shape->parent_id)->next_iv_index;
                     break;
                   case SHAPE_ROOT:
@@ -254,6 +255,12 @@ rb_shape_transition_shape_capa_with_id(rb_shape_t* shape, ID id)
     return get_next_shape_internal(shape, id, SHAPE_CAPACITY_CHANGE);
 }
 
+void
+rb_shape_transition_obj_size_pool_change(VALUE obj, size_t size_pool_index)
+{
+    rb_shape_t * shape = get_next_shape_internal(rb_shape_get_shape(obj), size_pool_edge_names[size_pool_index], SHAPE_SIZE_POOL_CHANGE);
+    rb_shape_set_shape(obj, shape);
+}
 
 bool
 rb_shape_get_iv_index(rb_shape_t * shape, ID id, attr_index_t *value)
@@ -271,6 +278,7 @@ rb_shape_get_iv_index(rb_shape_t * shape, ID id, attr_index_t *value)
               case SHAPE_CAPACITY_CHANGE:
               case SHAPE_IVAR_UNDEF:
               case SHAPE_ROOT:
+              case SHAPE_SIZE_POOL_CHANGE:
                 return false;
               case SHAPE_FROZEN:
                 rb_bug("Ivar should not exist on transition\n");
@@ -535,6 +543,11 @@ void
 Init_default_shapes(void)
 {
     id_frozen = rb_make_internal_id();
+
+    // Shapes by size pool
+    for (int i = 0; i < SIZE_POOL_COUNT; i++) {
+        size_pool_edge_names[i] = rb_make_internal_id();
+    }
 
     // Root shape
     rb_shape_t * root = rb_shape_alloc_with_parent_id(0, INVALID_SHAPE_ID);
