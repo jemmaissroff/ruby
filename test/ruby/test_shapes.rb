@@ -86,32 +86,20 @@ class TestShapes < Test::Unit::TestCase
     assert_equal(2, bar_shape.next_iv_index)
   end
 
-  def test_new_obj_transitions_from_root_shape
-    assert_shape_equal(
-      RubyVM::Shape.root_shape,
-      RubyVM::Shape.find_by_id(RubyVM::Shape.of(Object.new).parent_id)
-    )
+  def test_new_obj_has_root_shape
+    assert_shape_equal(RubyVM::Shape.root_shape, RubyVM::Shape.of(Object.new))
   end
 
-  def test_str_transitions_from_root_shape
-    assert_shape_equal(
-      RubyVM::Shape.root_shape,
-      RubyVM::Shape.find_by_id(RubyVM::Shape.of("").parent_id)
-    )
+  def test_str_has_root_shape
+    assert_shape_equal(RubyVM::Shape.root_shape, RubyVM::Shape.of(""))
   end
 
-  def test_array_transitions_from_root_shape
-    assert_shape_equal(
-      RubyVM::Shape.root_shape,
-      RubyVM::Shape.find_by_id(RubyVM::Shape.of([]).parent_id)
-    )
+  def test_array_has_root_shape
+    assert_shape_equal(RubyVM::Shape.root_shape, RubyVM::Shape.of([]))
   end
 
-  def test_hash_transitions_from_root_shape
-    assert_shape_equal(
-      RubyVM::Shape.root_shape,
-      RubyVM::Shape.find_by_id(RubyVM::Shape.of({}).parent_id)
-    )
+  def test_hash_has_root_shape
+    assert_shape_equal(RubyVM::Shape.root_shape, RubyVM::Shape.of({}))
   end
 
   def test_true_has_special_const_shape_id
@@ -125,10 +113,7 @@ class TestShapes < Test::Unit::TestCase
   def test_basic_shape_transition
     obj = Example.new
     refute_equal(RubyVM::Shape.root_shape, RubyVM::Shape.of(obj))
-    assert_shape_equal(
-      RubyVM::Shape.find_by_id(RubyVM::Shape.of(obj).parent_id).edges[:@a],
-      RubyVM::Shape.of(obj)
-    )
+    assert_shape_equal(RubyVM::Shape.root_shape.edges[:@a], RubyVM::Shape.of(obj))
     assert_equal(obj.instance_variable_get(:@a), 1)
   end
 
