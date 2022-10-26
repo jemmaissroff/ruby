@@ -6,6 +6,8 @@
 #include "internal/variable.h"
 #include <stdbool.h>
 
+static ID id_frozen;
+
 /*
  * Shape getters
  */
@@ -142,7 +144,6 @@ get_next_shape_internal(rb_shape_t* shape, ID id, enum shape_type shape_type)
                   case SHAPE_FROZEN:
                     new_shape->next_iv_index = rb_shape_get_shape_by_id(new_shape->parent_id)->next_iv_index;
                     break;
-                  case SHAPE_SPECIAL_CONST:
                   case SHAPE_ROOT:
                     rb_bug("Unreachable");
                     break;
@@ -192,11 +193,6 @@ rb_shape_transition_shape_frozen(VALUE obj)
     if (shape == rb_shape_get_root_shape()) {
         rb_shape_set_shape_id(obj, SPECIAL_CONST_SHAPE_ID);
         return;
-    }
-
-    static ID id_frozen;
-    if (!id_frozen) {
-        id_frozen = rb_make_internal_id();
     }
 
     next_shape = get_next_shape_internal(shape, (ID)id_frozen, SHAPE_FROZEN);
@@ -276,7 +272,6 @@ rb_shape_get_iv_index(rb_shape_t * shape, ID id, attr_index_t *value)
               case SHAPE_IVAR_UNDEF:
               case SHAPE_ROOT:
                 return false;
-              case SHAPE_SPECIAL_CONST:
               case SHAPE_FROZEN:
                 rb_bug("Ivar should not exist on transition\n");
             }
@@ -539,22 +534,24 @@ rb_shape_find_by_id(VALUE mod, VALUE id)
 void
 Init_default_shapes(void)
 {
+    id_frozen = rb_make_internal_id();
+
     // Root shape
-    GET_VM()->root_shape = rb_shape_alloc_with_parent_id(0, INVALID_SHAPE_ID);
+    rb_shape_t * root = rb_shape_alloc_with_parent_id(0, INVALID_SHAPE_ID);
+    GET_VM()->root_shape = root;
     RUBY_ASSERT(rb_shape_id(GET_VM()->root_shape) == ROOT_SHAPE_ID);
 
     // Shapes by size pool
     for (int i = 1; i < SIZE_POOL_COUNT; i++) {
-        shape_id_t size_pool_shape_id = rb_shape_id(rb_shape_transition_shape_capa_with_id(rb_shape_get_root_shape(), rb_make_internal_id()));
+        shape_id_t size_pool_shape_id = rb_shape_id(rb_shape_transition_shape_capa_with_id(root, rb_make_internal_id()));
         RUBY_ASSERT(size_pool_shape_id == (shape_id_t)i);
     }
 
     // Special const shape
-    rb_shape_t * special_const_shape = rb_shape_get_shape_by_id(SPECIAL_CONST_SHAPE_ID);
-    special_const_shape->edge_name = 0;
-    special_const_shape->next_iv_index = 0;
-    special_const_shape->parent_id = ROOT_SHAPE_ID;
-    special_const_shape->type = SHAPE_SPECIAL_CONST;
+    rb_shape_t * special_const_shape = get_next_shape_internal(root, (ID)id_frozen, SHAPE_FROZEN);
+    RUBY_ASSERT(rb_shape_id(special_const_shape) == SPECIAL_CONST_SHAPE_ID);
+    RUBY_ASSERT(SPECIAL_CONST_SHAPE_ID == (GET_VM()->next_shape_id - 1));
+    RUBY_ASSERT(rb_shape_frozen_shape_p(special_const_shape));
 }
 
 void
