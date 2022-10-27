@@ -86,8 +86,10 @@ class TestShapes < Test::Unit::TestCase
     assert_equal(2, bar_shape.next_iv_index)
   end
 
+  class TestObject; end
+
   def test_new_obj_has_root_shape
-    assert_shape_equal(RubyVM::Shape.root_shape, RubyVM::Shape.of(Object.new))
+    assert_shape_equal(RubyVM::Shape.root_shape, RubyVM::Shape.of(TestObject.new))
   end
 
   def test_str_has_root_shape
