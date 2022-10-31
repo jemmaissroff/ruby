@@ -1,6 +1,7 @@
 #include "vm_core.h"
 #include "vm_sync.h"
 #include "shape.h"
+#include "gc.h"
 #include "internal/class.h"
 #include "internal/symbol.h"
 #include "internal/variable.h"
@@ -134,16 +135,17 @@ get_next_shape_internal(rb_shape_t* shape, ID id, enum shape_type shape_type)
                 rb_shape_t * new_shape = rb_shape_alloc(id, shape);
 
                 new_shape->type = (uint8_t)shape_type;
+                new_shape->capacity = shape->capacity;
 
                 switch (shape_type) {
                   case SHAPE_IVAR:
-                    new_shape->next_iv_index = rb_shape_get_shape_by_id(new_shape->parent_id)->next_iv_index + 1;
+                    new_shape->next_iv_index = shape->next_iv_index + 1;
                     break;
                   case SHAPE_CAPACITY_CHANGE:
                   case SHAPE_IVAR_UNDEF:
                   case SHAPE_FROZEN:
                   case SHAPE_SIZE_POOL_CHANGE:
-                    new_shape->next_iv_index = rb_shape_get_shape_by_id(new_shape->parent_id)->next_iv_index;
+                    new_shape->next_iv_index = shape->next_iv_index;
                     break;
                   case SHAPE_ROOT:
                     rb_bug("Unreachable");
@@ -217,7 +219,7 @@ rb_shape_transition_shape(VALUE obj, ID id, rb_shape_t *shape)
  * max_iv_count
  */
 rb_shape_t *
-rb_shape_get_next_no_side_effects(rb_shape_t* shape, VALUE obj, ID id)
+rb_shape_get_next_iv_shape(rb_shape_t* shape, ID id)
 {
     return get_next_shape_internal(shape, id, SHAPE_IVAR);
 }
@@ -225,7 +227,7 @@ rb_shape_get_next_no_side_effects(rb_shape_t* shape, VALUE obj, ID id)
 rb_shape_t*
 rb_shape_get_next(rb_shape_t* shape, VALUE obj, ID id)
 {
-    rb_shape_t * new_shape = rb_shape_get_next_no_side_effects(shape, obj, id);
+    rb_shape_t * new_shape = rb_shape_get_next_iv_shape(shape, id);
 
     // Check if we should update max_iv_count on the object's class
     if (BUILTIN_TYPE(obj) == T_OBJECT) {
@@ -239,20 +241,12 @@ rb_shape_get_next(rb_shape_t* shape, VALUE obj, ID id)
 }
 
 rb_shape_t*
-rb_shape_transition_shape_capa(rb_shape_t* shape)
+rb_shape_transition_shape_capa(rb_shape_t* shape, uint32_t new_capacity)
 {
-    static ID capa_change_id;
-    if (!capa_change_id) {
-        capa_change_id = rb_make_internal_id();
-    }
-
-    return get_next_shape_internal(shape, capa_change_id, SHAPE_CAPACITY_CHANGE);
-}
-
-rb_shape_t*
-rb_shape_transition_shape_capa_with_id(rb_shape_t* shape, ID id)
-{
-    return get_next_shape_internal(shape, id, SHAPE_CAPACITY_CHANGE);
+    ID edge_name = rb_make_temporary_id(new_capacity);
+    rb_shape_t * new_shape = get_next_shape_internal(shape, edge_name, SHAPE_CAPACITY_CHANGE);
+    new_shape->capacity = new_capacity;
+    return new_shape;
 }
 
 void
@@ -334,6 +328,40 @@ rb_shape_flags_mask(void)
     return SHAPE_FLAG_MASK;
 }
 
+rb_shape_t *
+rb_shape_rebuild_shape(rb_shape_t * initial_shape, rb_shape_t * dest_shape)
+{
+    rb_shape_t * midway_shape;
+
+    if (dest_shape->type != SHAPE_ROOT) {
+        midway_shape = rb_shape_rebuild_shape(initial_shape, rb_shape_get_shape_by_id(dest_shape->parent_id));
+    }
+    else {
+        midway_shape = initial_shape;
+    }
+
+    switch (dest_shape->type) {
+        case SHAPE_IVAR:
+            if (midway_shape->capacity < midway_shape->next_iv_index) {
+                // There isn't enough room to write this IV, so we need to increase the capacity
+                midway_shape = rb_shape_transition_shape_capa(midway_shape, midway_shape->capacity * 2);
+            }
+
+            midway_shape = rb_shape_get_next_iv_shape(midway_shape, dest_shape->edge_name);
+            break;
+        case SHAPE_IVAR_UNDEF:
+            midway_shape = get_next_shape_internal(midway_shape, dest_shape->edge_name, SHAPE_IVAR_UNDEF);
+            break;
+        case SHAPE_ROOT:
+        case SHAPE_FROZEN:
+        case SHAPE_SIZE_POOL_CHANGE:
+        case SHAPE_CAPACITY_CHANGE:
+            break;
+    }
+
+    return midway_shape;
+}
+
 #if VM_CHECK_MODE > 0
 VALUE rb_cShape;
 
@@ -360,6 +388,14 @@ rb_shape_type(VALUE self)
     rb_shape_t * shape;
     TypedData_Get_Struct(self, rb_shape_t, &shape_data_type, shape);
     return INT2NUM(shape->type);
+}
+
+static VALUE
+rb_shape_capacity(VALUE self)
+{
+    rb_shape_t * shape;
+    TypedData_Get_Struct(self, rb_shape_t, &shape_data_type, shape);
+    return INT2NUM(shape->capacity);
 }
 
 static VALUE
@@ -551,13 +587,16 @@ Init_default_shapes(void)
 
     // Root shape
     rb_shape_t * root = rb_shape_alloc_with_parent_id(0, INVALID_SHAPE_ID);
+    root->capacity = (uint32_t)((rb_size_pool_slot_size(0) - offsetof(struct RObject, as.ary)) / sizeof(VALUE));
+    root->type = SHAPE_ROOT;
     GET_VM()->root_shape = root;
     RUBY_ASSERT(rb_shape_id(GET_VM()->root_shape) == ROOT_SHAPE_ID);
 
     // Shapes by size pool
     for (int i = 1; i < SIZE_POOL_COUNT; i++) {
-        shape_id_t size_pool_shape_id = rb_shape_id(rb_shape_transition_shape_capa_with_id(root, rb_make_internal_id()));
-        RUBY_ASSERT(size_pool_shape_id == (shape_id_t)i);
+        uint32_t capa = (uint32_t)((rb_size_pool_slot_size(i) - offsetof(struct RObject, as.ary)) / sizeof(VALUE));
+        rb_shape_t * new_shape = rb_shape_transition_shape_capa(root, capa);
+        RUBY_ASSERT(rb_shape_id(new_shape) == (shape_id_t)i);
     }
 
     // Special const shape
@@ -582,6 +621,7 @@ Init_shape(void)
     rb_define_method(rb_cShape, "depth", rb_shape_export_depth, 0);
     rb_define_method(rb_cShape, "id", rb_wrapped_shape_id, 0);
     rb_define_method(rb_cShape, "type", rb_shape_type, 0);
+    rb_define_method(rb_cShape, "capacity", rb_shape_capacity, 0);
     rb_define_const(rb_cShape, "SHAPE_ROOT", INT2NUM(SHAPE_ROOT));
     rb_define_const(rb_cShape, "SHAPE_IVAR", INT2NUM(SHAPE_IVAR));
     rb_define_const(rb_cShape, "SHAPE_IVAR_UNDEF", INT2NUM(SHAPE_IVAR_UNDEF));

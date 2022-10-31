@@ -1403,12 +1403,6 @@ rb_ensure_iv_list_size(VALUE obj, uint32_t current_capacity, uint32_t new_capaci
     else {
         newptr = obj_ivar_heap_realloc(obj, current_capacity, new_capacity);
     }
-
-#if USE_RVARGC
-    ROBJECT(obj)->numiv = new_capacity;
-#else
-    ROBJECT(obj)->as.heap.numiv = new_capacity;
-#endif
 }
 
 struct gen_ivtbl *
@@ -1439,6 +1433,12 @@ rb_grow_iv_list(VALUE obj)
     RUBY_ASSERT(len > 0);
     uint32_t newsize = (uint32_t)(len * 2);
     rb_ensure_iv_list_size(obj, len, newsize);
+
+#if USE_RVARGC
+    ROBJECT_SET_NUMIV(obj, newsize);
+#else
+    ROBJECT(obj)->as.heap.numiv = newsize;
+#endif
 }
 
 static VALUE
@@ -1449,9 +1449,11 @@ obj_ivar_set(VALUE obj, ID id, VALUE val)
     // Get the current shape
     rb_shape_t * shape = rb_shape_get_shape_by_id(ROBJECT_SHAPE_ID(obj));
 
+    bool found = true;
     if (!rb_shape_get_iv_index(shape, id, &index)) {
-        shape = rb_shape_get_next(shape, obj, id);
-        index = shape->next_iv_index - 1;
+        // Can't find the index
+        index = shape->next_iv_index;
+        found = false;
     }
 
     uint32_t len = ROBJECT_NUMIV(obj);
@@ -1461,10 +1463,16 @@ obj_ivar_set(VALUE obj, ID id, VALUE val)
     // GC could read off the end of the buffer.
     if (len <= index) {
         rb_grow_iv_list(obj);
+        shape = rb_shape_get_shape_by_id(ROBJECT_SHAPE_ID(obj));
+    }
+
+    if (!found) {
+        shape = rb_shape_get_next(shape, obj, id);
+        RUBY_ASSERT(index == (shape->next_iv_index - 1));
+        rb_shape_set_shape(obj, shape);
     }
 
     RB_OBJ_WRITE(obj, &ROBJECT_IVPTR(obj)[index], val);
-    rb_shape_set_shape(obj, shape);
 
     return val;
 }

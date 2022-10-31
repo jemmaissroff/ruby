@@ -33,6 +33,7 @@
 #include "internal/string.h"
 #include "internal/symbol.h"
 #include "internal/variable.h"
+#include "variable.h"
 #include "probes.h"
 #include "ruby/encoding.h"
 #include "ruby/st.h"
@@ -264,30 +265,75 @@ rb_obj_singleton_class(VALUE obj)
     return rb_singleton_class(obj);
 }
 
-/*! \private */
-MJIT_FUNC_EXPORTED void
-rb_obj_copy_ivar(VALUE dest, VALUE obj)
-{
-    uint32_t dest_capacity = ROBJECT_NUMIV(dest);
-    uint32_t src_num_ivs = ROBJECT_IV_COUNT(obj);
-
-    if (dest_capacity < src_num_ivs) {
-        rb_ensure_iv_list_size(dest, dest_capacity, src_num_ivs);
-        RUBY_ASSERT(!(RBASIC(dest)->flags & ROBJECT_EMBED));
-    }
-
-    VALUE * dest_buf = ROBJECT_IVPTR(dest);
-    VALUE * src_buf = ROBJECT_IVPTR(obj);
-
-    MEMCPY(dest_buf, src_buf, VALUE, ROBJECT_IV_COUNT(obj));
-}
-
-static int
+int
 ivar_set_i(st_data_t key, st_data_t val, st_data_t obj)
 {
     rb_ivar_set((VALUE)obj, (ID)key, (VALUE)val);
 
     return ST_CONTINUE;
+}
+
+/*! \private */
+MJIT_FUNC_EXPORTED void
+rb_obj_copy_ivar(VALUE dest, VALUE obj)
+{
+    if (RB_TYPE_P(obj, T_CLASS) || RB_TYPE_P(obj, T_MODULE)) {
+        return;
+    }
+
+    RUBY_ASSERT(BUILTIN_TYPE(dest) == BUILTIN_TYPE(obj));
+    uint32_t src_num_ivs = RBASIC_IV_COUNT(obj);
+    rb_shape_t * src_shape = rb_shape_get_shape(obj);
+    rb_shape_t * dest_shape = src_shape;
+    VALUE * src_buf;
+    VALUE * dest_buf;
+
+    if (!src_num_ivs) {
+        return;
+    }
+
+    // The copy should be mutable, so we don't want the frozen shape
+    if (rb_shape_frozen_shape_p(src_shape)) {
+        dest_shape = rb_shape_get_shape_by_id(src_shape->parent_id);
+    }
+
+    switch(BUILTIN_TYPE(obj)) {
+        case T_OBJECT:
+            src_buf = ROBJECT_IVPTR(obj);
+            dest_buf = ROBJECT_IVPTR(dest);
+
+            if (ROBJECT_NUMIV(dest) != ROBJECT_NUMIV(obj)) {
+                // We have to rebuild the shape
+                rb_shape_t * initial_shape = rb_shape_get_shape(dest);
+                RUBY_ASSERT(initial_shape->parent_id == ROOT_SHAPE_ID || initial_shape->type == SHAPE_ROOT);
+
+                dest_shape = rb_shape_rebuild_shape(initial_shape, src_shape);
+            }
+
+            if (ROBJECT_NUMIV(dest) < src_num_ivs) {
+                rb_ensure_iv_list_size(dest, ROBJECT_NUMIV(dest), dest_shape->capacity);
+                dest_buf = ROBJECT_IVPTR(dest);
+            }
+            break;
+        default:
+            {
+                struct gen_ivtbl * src_ivtbl;
+                if (!rb_gen_ivtbl_get(obj, 0, &src_ivtbl)) {
+                    return;
+                }
+                src_buf = src_ivtbl->ivptr;
+                struct gen_ivtbl * ivtbl = rb_ensure_generic_iv_list_size(dest, src_shape->capacity);
+                dest_buf = ivtbl->ivptr;
+            }
+    }
+
+    MEMCPY(dest_buf, src_buf, VALUE, src_num_ivs);
+
+    // Fire write barriers
+    for (uint32_t i = 0; i < src_num_ivs; i++) {
+        RB_OBJ_WRITTEN(dest, Qundef, dest_buf[i]);
+    }
+    rb_shape_set_shape(dest, dest_shape);
 }
 
 static void
@@ -302,30 +348,7 @@ init_copy(VALUE dest, VALUE obj)
     rb_copy_wb_protected_attribute(dest, obj);
     rb_copy_generic_ivar(dest, obj);
     rb_gc_copy_finalizer(dest, obj);
-
-    if (rb_gc_obj_slot_size(obj) == rb_gc_obj_slot_size(dest)) {
-        if (RB_TYPE_P(obj, T_OBJECT)) {
-            rb_obj_copy_ivar(dest, obj);
-        }
-
-        rb_shape_t *shape_to_set = rb_shape_get_shape(obj);
-
-        // If the object is frozen, the "dup"'d object will *not* be frozen,
-        // so we need to copy the frozen shape's parent to the new object.
-        if (rb_shape_frozen_shape_p(shape_to_set)) {
-            shape_to_set = rb_shape_get_shape_by_id(shape_to_set->parent_id);
-        }
-
-        // shape ids are different
-        rb_shape_set_shape(dest, shape_to_set);
-    }
-    else {
-        // If obj and dest are allocated into different size_pools,
-        // they will not make the same shape transitions.
-        // In this case we set ivars one by one to ensure dest
-        // has the correct shape
-        rb_ivar_foreach(obj, ivar_set_i, (st_data_t)dest);
-    }
+    rb_obj_copy_ivar(dest, obj);
 }
 
 static VALUE immutable_obj_clone(VALUE obj, VALUE kwfreeze);

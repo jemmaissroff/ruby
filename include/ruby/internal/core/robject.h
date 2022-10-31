@@ -192,6 +192,12 @@ ROBJECT_NUMIV(VALUE obj)
 #endif
 }
 
+static inline void
+ROBJECT_SET_NUMIV(VALUE obj, uint32_t capacity)
+{
+    ROBJECT(obj)->numiv = capacity;
+}
+
 RBIMPL_ATTR_PURE_UNLESS_DEBUG()
 RBIMPL_ATTR_ARTIFICIAL()
 /**

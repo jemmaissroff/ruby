@@ -46,6 +46,7 @@ struct rb_shape {
     struct rb_id_table * edges; // id_table from ID (ivar) to next shape
     ID edge_name; // ID (ivar) for transition from parent to rb_shape
     attr_index_t next_iv_index;
+    uint32_t capacity; // Total capacity of the current object
     uint8_t type;
     shape_id_t parent_id;
 };
@@ -122,16 +123,16 @@ rb_shape_t* rb_shape_get_shape(VALUE obj);
 int rb_shape_frozen_shape_p(rb_shape_t* shape);
 void rb_shape_transition_shape_frozen(VALUE obj);
 void rb_shape_transition_shape_remove_ivar(VALUE obj, ID id, rb_shape_t *shape);
-rb_shape_t* rb_shape_transition_shape_capa(rb_shape_t* shape);
-rb_shape_t* rb_shape_transition_shape_capa_with_id(rb_shape_t* shape, ID id);
+rb_shape_t* rb_shape_transition_shape_capa(rb_shape_t* shape, uint32_t new_capacity);
 void rb_shape_transition_shape(VALUE obj, ID id, rb_shape_t *shape);
-rb_shape_t* rb_shape_get_next_no_side_effects(rb_shape_t* shape, VALUE obj, ID id);
+rb_shape_t* rb_shape_get_next_iv_shape(rb_shape_t* shape, ID id);
 rb_shape_t* rb_shape_get_next(rb_shape_t* shape, VALUE obj, ID id);
 bool rb_shape_get_iv_index(rb_shape_t * shape, ID id, attr_index_t * value);
 shape_id_t rb_shape_id(rb_shape_t * shape);
 MJIT_SYMBOL_EXPORT_END
 
 void rb_shape_transition_obj_size_pool_change(VALUE obj, size_t size_pool_index);
+rb_shape_t * rb_shape_rebuild_shape(rb_shape_t * initial_shape, rb_shape_t * dest_shape);
 
 static inline uint32_t
 ROBJECT_IV_COUNT(VALUE obj)
@@ -140,6 +141,12 @@ ROBJECT_IV_COUNT(VALUE obj)
     uint32_t ivc = rb_shape_get_shape_by_id(ROBJECT_SHAPE_ID(obj))->next_iv_index;
     RUBY_ASSERT(ivc <= ROBJECT_NUMIV(obj));
     return ivc;
+}
+
+static inline uint32_t
+RBASIC_IV_COUNT(VALUE obj)
+{
+    return rb_shape_get_shape_by_id(rb_shape_get_shape_id(obj))->next_iv_index;
 }
 
 rb_shape_t * rb_shape_alloc(ID edge_name, rb_shape_t * parent);

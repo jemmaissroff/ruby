@@ -2594,6 +2594,12 @@ size_pool_slot_size(unsigned char pool_id)
     return slot_size;
 }
 
+size_t
+rb_size_pool_slot_size(unsigned char pool_id)
+{
+    return size_pool_slot_size(pool_id);
+}
+
 bool
 rb_gc_size_allocatable_p(size_t size)
 {
@@ -2939,7 +2945,7 @@ rb_class_instance_allocate_internal(VALUE klass, VALUE flags, bool wb_protected)
 
 #if USE_RVARGC
     uint32_t capa = (uint32_t)((rb_gc_obj_slot_size(obj) - offsetof(struct RObject, as.ary)) / sizeof(VALUE));
-    ROBJECT(obj)->numiv = capa;
+    ROBJECT_SET_NUMIV(obj, capa);
 #endif
 
 #if RUBY_DEBUG
@@ -2948,12 +2954,6 @@ rb_class_instance_allocate_internal(VALUE klass, VALUE flags, bool wb_protected)
         ptr[i] = Qundef;
     }
 #endif
-/* JEM ???
-    else {
-        rb_ensure_iv_list_size(obj, ROBJECT_NUMIV(obj), index_tbl_num_entries);
-    }
->>>>>>> 122794076b (Set ivars individually on dups allocated out of different size_pools)
-    */
 
     return obj;
 }
@@ -10032,9 +10032,13 @@ gc_ref_update_object(rb_objspace_t *objspace, VALUE v)
             xfree(ptr);
         }
         ptr = ROBJECT(v)->as.ary;
+        size_t size_pool_shape_id = size_pool_idx_for_size(embed_size);
+        rb_shape_t * initial_shape = rb_shape_get_shape_by_id((shape_id_t)size_pool_shape_id);
+        rb_shape_t * new_shape = rb_shape_rebuild_shape(initial_shape, rb_shape_get_shape(v));
+        rb_shape_set_shape(v, new_shape);
 
         uint32_t capa = (uint32_t)((slot_size - offsetof(struct RObject, as.ary)) / sizeof(VALUE));
-        ROBJECT(v)->numiv = capa;
+        ROBJECT_SET_NUMIV(v, capa);
     }
 #endif
 
