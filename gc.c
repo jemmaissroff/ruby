@@ -8393,6 +8393,8 @@ gc_compact_destination_pool(rb_objspace_t *objspace, rb_size_pool_t *src_pool, V
 {
     size_t obj_size;
 
+    *idx = 0;
+
     switch (BUILTIN_TYPE(src)) {
         case T_ARRAY:
             obj_size = rb_ary_size_as_embedded(src);
@@ -8413,9 +8415,6 @@ gc_compact_destination_pool(rb_objspace_t *objspace, rb_size_pool_t *src_pool, V
     if (rb_gc_size_allocatable_p(obj_size)){
         *idx = size_pool_idx_for_size(obj_size);
     }
-    else {
-        *idx = 0;
-    }
     return &size_pools[*idx];
 }
 
@@ -8423,7 +8422,7 @@ static bool
 gc_compact_move(rb_objspace_t *objspace, rb_heap_t *heap, rb_size_pool_t *size_pool, VALUE src)
 {
     GC_ASSERT(BUILTIN_TYPE(src) != T_MOVED);
-    size_t size_pool_index;
+    size_t size_pool_index = 0;
     rb_heap_t *dheap = SIZE_POOL_EDEN_HEAP(gc_compact_destination_pool(objspace, size_pool, src, &size_pool_index));
 
     if (gc_compact_heap_cursors_met_p(dheap)) {
