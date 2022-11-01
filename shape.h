@@ -135,11 +135,17 @@ void rb_shape_transition_obj_size_pool_change(VALUE obj, size_t size_pool_index)
 rb_shape_t * rb_shape_rebuild_shape(rb_shape_t * initial_shape, rb_shape_t * dest_shape);
 
 static inline uint32_t
+ROBJECT_IV_CAPACITY(VALUE obj)
+{
+    RBIMPL_ASSERT_TYPE(obj, RUBY_T_OBJECT);
+    return rb_shape_get_shape_by_id(ROBJECT_SHAPE_ID(obj))->capacity;
+}
+
+static inline uint32_t
 ROBJECT_IV_COUNT(VALUE obj)
 {
     RBIMPL_ASSERT_TYPE(obj, RUBY_T_OBJECT);
     uint32_t ivc = rb_shape_get_shape_by_id(ROBJECT_SHAPE_ID(obj))->next_iv_index;
-    RUBY_ASSERT(ivc <= ROBJECT_NUMIV(obj));
     return ivc;
 }
 

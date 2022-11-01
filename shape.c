@@ -461,11 +461,16 @@ rb_shape_edge_name(VALUE self)
     rb_shape_t* shape;
     TypedData_Get_Struct(self, rb_shape_t, &shape_data_type, shape);
 
-    if (shape->edge_name) {
-        return ID2SYM(shape->edge_name);
+    if ((shape->edge_name & (ID_INTERNAL)) == ID_INTERNAL) {
+        return INT2NUM(shape->capacity);
     }
     else {
-        return Qnil;
+        if (shape->edge_name) {
+            return ID2SYM(shape->edge_name);
+        }
+        else {
+            return Qnil;
+        }
     }
 }
 

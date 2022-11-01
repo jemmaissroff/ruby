@@ -1426,19 +1426,25 @@ rb_ensure_generic_iv_list_size(VALUE obj, uint32_t newsize)
 }
 
 // @note May raise when there are too many instance variables.
-void
+rb_shape_t *
 rb_grow_iv_list(VALUE obj)
 {
     uint32_t len = ROBJECT_NUMIV(obj);
     RUBY_ASSERT(len > 0);
     uint32_t newsize = (uint32_t)(len * 2);
     rb_ensure_iv_list_size(obj, len, newsize);
+    rb_shape_t * res;
 
 #if USE_RVARGC
     ROBJECT_SET_NUMIV(obj, newsize);
+    res = rb_shape_transition_shape_capa(rb_shape_get_shape(obj), newsize);
+    rb_shape_set_shape(obj, res);
 #else
     ROBJECT(obj)->as.heap.numiv = newsize;
+    res = rb_shape_get_shape(obj);
 #endif
+
+    return res;
 }
 
 static VALUE
@@ -1462,8 +1468,7 @@ obj_ivar_set(VALUE obj, ID id, VALUE val)
     // on this object until the buffer has been allocated, otherwise
     // GC could read off the end of the buffer.
     if (len <= index) {
-        rb_grow_iv_list(obj);
-        shape = rb_shape_get_shape_by_id(ROBJECT_SHAPE_ID(obj));
+        shape = rb_grow_iv_list(obj);
     }
 
     if (!found) {

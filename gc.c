@@ -10036,9 +10036,6 @@ gc_ref_update_object(rb_objspace_t *objspace, VALUE v)
         rb_shape_t * initial_shape = rb_shape_get_shape_by_id((shape_id_t)size_pool_shape_id);
         rb_shape_t * new_shape = rb_shape_rebuild_shape(initial_shape, rb_shape_get_shape(v));
         rb_shape_set_shape(v, new_shape);
-
-        uint32_t capa = (uint32_t)((slot_size - offsetof(struct RObject, as.ary)) / sizeof(VALUE));
-        ROBJECT_SET_NUMIV(v, capa);
     }
 #endif
 

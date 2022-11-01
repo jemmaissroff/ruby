@@ -302,7 +302,7 @@ rb_obj_copy_ivar(VALUE dest, VALUE obj)
             src_buf = ROBJECT_IVPTR(obj);
             dest_buf = ROBJECT_IVPTR(dest);
 
-            if (ROBJECT_NUMIV(dest) != ROBJECT_NUMIV(obj)) {
+            if (RB_FL_ANY_RAW(dest, ROBJECT_EMBED) != RB_FL_ANY_RAW(obj, ROBJECT_EMBED) || ROBJECT_NUMIV(dest) != ROBJECT_NUMIV(obj)) {
                 // We have to rebuild the shape
                 rb_shape_t * initial_shape = rb_shape_get_shape(dest);
                 RUBY_ASSERT(initial_shape->parent_id == ROOT_SHAPE_ID || initial_shape->type == SHAPE_ROOT);
