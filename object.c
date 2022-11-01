@@ -265,14 +265,6 @@ rb_obj_singleton_class(VALUE obj)
     return rb_singleton_class(obj);
 }
 
-int
-ivar_set_i(st_data_t key, st_data_t val, st_data_t obj)
-{
-    rb_ivar_set((VALUE)obj, (ID)key, (VALUE)val);
-
-    return ST_CONTINUE;
-}
-
 /*! \private */
 MJIT_FUNC_EXPORTED void
 rb_obj_copy_ivar(VALUE dest, VALUE obj)
