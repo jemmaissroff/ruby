@@ -207,10 +207,6 @@ module RubyVM::MJIT
     Primitive.cexpr! %q{ INT2NUM(VM_METHOD_TYPE_ISEQ) }
   end
 
-  def C.ROOT_SHAPE_ID
-    Primitive.cexpr! %q{ ULONG2NUM(ROOT_SHAPE_ID) }
-  end
-
   def C.INVALID_SHAPE_ID
     Primitive.cexpr! %q{ ULONG2NUM(INVALID_SHAPE_ID) }
   end
@@ -630,6 +626,7 @@ module RubyVM::MJIT
       edges: [CType::Pointer.new { self.rb_id_table }, Primitive.cexpr!("OFFSETOF((*((struct rb_shape *)NULL)), edges)")],
       edge_name: [self.ID, Primitive.cexpr!("OFFSETOF((*((struct rb_shape *)NULL)), edge_name)")],
       next_iv_index: [self.attr_index_t, Primitive.cexpr!("OFFSETOF((*((struct rb_shape *)NULL)), next_iv_index)")],
+      capacity: [CType::Immediate.parse("uint32_t"), Primitive.cexpr!("OFFSETOF((*((struct rb_shape *)NULL)), capacity)")],
       type: [CType::Immediate.parse("uint8_t"), Primitive.cexpr!("OFFSETOF((*((struct rb_shape *)NULL)), type)")],
       parent_id: [self.shape_id_t, Primitive.cexpr!("OFFSETOF((*((struct rb_shape *)NULL)), parent_id)")],
     )
