@@ -1438,7 +1438,7 @@ rb_grow_iv_list(VALUE obj)
 #if USE_RVARGC
     ROBJECT_SET_NUMIV(obj, newsize);
     res = rb_shape_transition_shape_capa(rb_shape_get_shape(obj), newsize);
-    rb_shape_set_shape(obj, res);
+    rb_shape_set_shape(obj, res); // is this necessary?
 #else
     ROBJECT(obj)->as.heap.numiv = newsize;
     res = rb_shape_get_shape(obj);
