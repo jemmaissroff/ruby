@@ -13,6 +13,34 @@ module RubyVM::MJIT
       Primitive.cexpr! 'UINT2NUM(SHAPE_FLAG_SHIFT)'
     end
 
+    def SHAPE_ROOT
+      Primitive.cexpr! 'UINT2NUM(SHAPE_ROOT)'
+    end
+
+    def SHAPE_IVAR
+      Primitive.cexpr! 'UINT2NUM(SHAPE_IVAR)'
+    end
+
+    def SHAPE_FROZEN
+      Primitive.cexpr! 'UINT2NUM(SHAPE_FROZEN)'
+    end
+
+    def SHAPE_CAPACITY_CHANGE
+      Primitive.cexpr! 'UINT2NUM(SHAPE_CAPACITY_CHANGE)'
+    end
+
+    def SHAPE_IVAR_UNDEF
+      Primitive.cexpr! 'UINT2NUM(SHAPE_IVAR_UNDEF)'
+    end
+
+    def SHAPE_SIZE_POOL_CHANGE
+      Primitive.cexpr! 'UINT2NUM(SHAPE_SIZE_POOL_CHANGE)'
+    end
+
+    def SHAPE_INITIAL_CAPACITY
+      Primitive.cexpr! 'UINT2NUM(SHAPE_INITIAL_CAPACITY)'
+    end
+
     def ROBJECT_EMBED_LEN_MAX
       Primitive.cexpr! 'INT2NUM(RBIMPL_EMBED_LEN_MAX_OF(VALUE))'
     end
@@ -177,6 +205,10 @@ module RubyVM::MJIT
 
   def C.VM_METHOD_TYPE_ISEQ
     Primitive.cexpr! %q{ INT2NUM(VM_METHOD_TYPE_ISEQ) }
+  end
+
+  def C.ROOT_SHAPE_ID
+    Primitive.cexpr! %q{ ULONG2NUM(ROOT_SHAPE_ID) }
   end
 
   def C.INVALID_SHAPE_ID

@@ -1625,6 +1625,7 @@ iterate_over_shapes_with_callback(rb_shape_t *shape, VALUE* iv_list, rb_ivar_for
                 callback(shape->edge_name, val, arg);
             }
             return;
+        case SHAPE_INITIAL_CAPACITY:
         case SHAPE_CAPACITY_CHANGE:
         case SHAPE_IVAR_UNDEF:
         case SHAPE_FROZEN:

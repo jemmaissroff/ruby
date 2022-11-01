@@ -147,6 +147,7 @@ get_next_shape_internal(rb_shape_t* shape, ID id, enum shape_type shape_type)
                   case SHAPE_SIZE_POOL_CHANGE:
                     new_shape->next_iv_index = shape->next_iv_index;
                     break;
+                  case SHAPE_INITIAL_CAPACITY:
                   case SHAPE_ROOT:
                     rb_bug("Unreachable");
                     break;
@@ -273,6 +274,7 @@ rb_shape_get_iv_index(rb_shape_t * shape, ID id, attr_index_t *value)
               case SHAPE_IVAR_UNDEF:
               case SHAPE_ROOT:
               case SHAPE_SIZE_POOL_CHANGE:
+              case SHAPE_INITIAL_CAPACITY:
                 return false;
               case SHAPE_FROZEN:
                 rb_bug("Ivar should not exist on transition\n");
@@ -601,11 +603,15 @@ Init_default_shapes(void)
     for (int i = 1; i < SIZE_POOL_COUNT; i++) {
         uint32_t capa = (uint32_t)((rb_size_pool_slot_size(i) - offsetof(struct RObject, as.ary)) / sizeof(VALUE));
         rb_shape_t * new_shape = rb_shape_transition_shape_capa(root, capa);
+        new_shape->type = SHAPE_INITIAL_CAPACITY;
         RUBY_ASSERT(rb_shape_id(new_shape) == (shape_id_t)i);
     }
 
     // Special const shape
-    rb_shape_t * special_const_shape = get_next_shape_internal(root, (ID)id_frozen, SHAPE_FROZEN);
+#if RUBY_DEBUG
+    rb_shape_t * special_const_shape =
+#endif
+        get_next_shape_internal(root, (ID)id_frozen, SHAPE_FROZEN);
     RUBY_ASSERT(rb_shape_id(special_const_shape) == SPECIAL_CONST_SHAPE_ID);
     RUBY_ASSERT(SPECIAL_CONST_SHAPE_ID == (GET_VM()->next_shape_id - 1));
     RUBY_ASSERT(rb_shape_frozen_shape_p(special_const_shape));
