@@ -196,7 +196,11 @@ ROBJECT_NUMIV(VALUE obj)
 static inline void
 ROBJECT_SET_NUMIV(VALUE obj, uint32_t capacity)
 {
+#if USE_RVARGC
     ROBJECT(obj)->numiv = capacity;
+#else
+    ROBJECT(obj)->as.heap.numiv = capacity;
+#endif
 }
 
 RBIMPL_ATTR_PURE_UNLESS_DEBUG()
