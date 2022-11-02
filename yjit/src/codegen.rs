@@ -1542,6 +1542,22 @@ fn gen_get_ep(asm: &mut Assembler, level: u32) -> Opnd {
     ep_opnd
 }
 
+// Gets the EP of the ISeq of the containing method, or "local level".
+// Equivalent of GET_LEP() macro.
+fn gen_get_lep(jit: &mut JITState, asm: &mut Assembler) -> Opnd {
+    // Equivalent of get_lvar_level() in compile.c
+    fn get_lvar_level(iseq: IseqPtr) -> u32 {
+        if iseq == unsafe { rb_get_iseq_body_local_iseq(iseq) } {
+            0
+        } else {
+            1 + get_lvar_level(unsafe { rb_get_iseq_body_parent_iseq(iseq) })
+        }
+    }
+
+    let level = get_lvar_level(jit.get_iseq());
+    gen_get_ep(asm, level)
+}
+
 fn gen_getlocal_generic(
     ctx: &mut Context,
     asm: &mut Assembler,
@@ -2610,9 +2626,6 @@ fn gen_opt_aref(
         return EndBlock;
     }
 
-    // Remember the context on entry for adding guard chains
-    let starting_context = *ctx;
-
     // Specialize base on compile time values
     let comptime_idx = jit_peek_at_stack(jit, ctx, 0);
     let comptime_recv = jit_peek_at_stack(jit, ctx, 1);
@@ -2625,29 +2638,21 @@ fn gen_opt_aref(
             return CantCompile;
         }
 
-        // Pop the stack operands
-        let idx_opnd = ctx.stack_pop(1);
-        let recv_opnd = ctx.stack_pop(1);
-        let recv_reg = asm.load(recv_opnd);
+        // Get the stack operands
+        let idx_opnd = ctx.stack_opnd(0);
+        let recv_opnd = ctx.stack_opnd(1);
 
-        // if (SPECIAL_CONST_P(recv)) {
-        // Bail if receiver is not a heap object
-        asm.test(recv_reg, (RUBY_IMMEDIATE_MASK as u64).into());
-        asm.jnz(side_exit.into());
-        asm.cmp(recv_reg, Qfalse.into());
-        asm.je(side_exit.into());
-        asm.cmp(recv_reg, Qnil.into());
-        asm.je(side_exit.into());
-
-        // Bail if recv has a class other than ::Array.
+        // Guard that the receiver is an ::Array
         // BOP_AREF check above is only good for ::Array.
-        asm.cmp(unsafe { rb_cArray }.into(), Opnd::mem(64, recv_reg, RUBY_OFFSET_RBASIC_KLASS));
-        jit_chain_guard(
-            JCC_JNE,
+        jit_guard_known_klass(
             jit,
-            &starting_context,
+            ctx,
             asm,
             ocb,
+            unsafe { rb_cArray },
+            recv_opnd,
+            StackOpnd(1),
+            comptime_recv,
             OPT_AREF_MAX_CHAIN_DEPTH,
             side_exit,
         );
@@ -2662,6 +2667,9 @@ fn gen_opt_aref(
         {
             let idx_reg = asm.rshift(idx_reg, Opnd::UImm(1)); // Convert fixnum to int
             let val = asm.ccall(rb_ary_entry_internal as *const u8, vec![recv_opnd, idx_reg]);
+
+            // Pop the argument and the receiver
+            ctx.stack_pop(2);
 
             // Push the return value onto the stack
             let stack_ret = ctx.stack_push(Type::Unknown);
@@ -3995,9 +4003,14 @@ unsafe extern "C" fn build_kwhash(ci: *const rb_callinfo, sp: *const VALUE) -> V
     hash
 }
 
-enum BlockHandler {
+// SpecVal is a single value in an iseq invocation's environment on the stack,
+// at sp[-2]. Depending on the frame type, it can serve different purposes,
+// which are covered here by enum variants.
+enum SpecVal {
     None,
-    CurrentFrame,
+    BlockISeq(IseqPtr),
+    BlockParamProxy,
+    PrevEP(*const VALUE),
 }
 
 struct ControlFrame {
@@ -4006,8 +4019,7 @@ struct ControlFrame {
     iseq: Option<IseqPtr>,
     pc: Option<u64>,
     frame_type: u32,
-    block_handler: BlockHandler,
-    prev_ep: Option<*const VALUE>,
+    specval: SpecVal,
     cme: *const rb_callable_method_entry_t,
     local_size: i32
 }
@@ -4028,7 +4040,7 @@ struct ControlFrame {
 //   * Stack overflow is not checked (should be done by the caller)
 //   * Interrupts are not checked (should be done by the caller)
 fn gen_push_frame(
-    _jit: &mut JITState,
+    jit: &mut JITState,
     _ctx: &mut Context,
     asm: &mut Assembler,
     set_sp_cfp: bool, // if true CFP and SP will be switched to the callee
@@ -4060,19 +4072,33 @@ fn gen_push_frame(
     // Write special value at sp[-2]. It's either a block handler or a pointer to
     // the outer environment depending on the frame type.
     // sp[-2] = specval;
-    let specval: Opnd = match (frame.prev_ep, frame.block_handler) {
-        (None, BlockHandler::None) => {
+    let specval: Opnd = match frame.specval {
+        SpecVal::None => {
             VM_BLOCK_HANDLER_NONE.into()
         }
-        (None, BlockHandler::CurrentFrame) => {
+        SpecVal::BlockISeq(block_iseq) => {
+            // Change cfp->block_code in the current frame. See vm_caller_setup_arg_block().
+            // VM_CFP_TO_CAPTURED_BLOCK does &cfp->self, rb_captured_block->code.iseq aliases
+            // with cfp->block_code.
+            asm.store(Opnd::mem(64, CFP, RUBY_OFFSET_CFP_BLOCK_CODE), VALUE::from(block_iseq).into());
+
             let cfp_self = asm.lea(Opnd::mem(64, CFP, RUBY_OFFSET_CFP_SELF));
             asm.or(cfp_self, Opnd::Imm(1))
         }
-        (Some(prev_ep), BlockHandler::None) => {
+        SpecVal::BlockParamProxy => {
+            let ep_opnd = gen_get_lep(jit, asm);
+            let block_handler = asm.load(
+                Opnd::mem(64, ep_opnd, (SIZEOF_VALUE as i32) * (VM_ENV_DATA_INDEX_SPECVAL as i32))
+            );
+
+            asm.store(Opnd::mem(64, CFP, RUBY_OFFSET_CFP_BLOCK_CODE), block_handler);
+
+            block_handler
+        }
+        SpecVal::PrevEP(prev_ep) => {
             let tagged_prev_ep = (prev_ep as usize) | 1;
             VALUE(tagged_prev_ep).into()
         }
-        (_, _) => panic!("specval can only be one of prev_ep or block_handler")
     };
     asm.store(Opnd::mem(64, sp, SIZEOF_VALUE_I32 * -2), specval);
 
@@ -4218,6 +4244,43 @@ fn gen_send_cfunc(
         return CantCompile;
     }
 
+    let block_arg = flags & VM_CALL_ARGS_BLOCKARG != 0;
+    let block_arg_type = if block_arg {
+        Some(ctx.get_opnd_type(StackOpnd(0)))
+    } else {
+        None
+    };
+
+    match block_arg_type {
+        Some(Type::Nil | Type::BlockParamProxy) => {
+            // We'll handle this later
+        }
+        None => {
+            // Nothing to do
+        }
+        _ => {
+            gen_counter_incr!(asm, send_block_arg);
+            return CantCompile;
+        }
+    }
+
+    match block_arg_type {
+        Some(Type::Nil) => {
+            // We have a nil block arg, so let's pop it off the args
+            ctx.stack_pop(1);
+        }
+        Some(Type::BlockParamProxy) => {
+            // We don't need the actual stack value
+            ctx.stack_pop(1);
+        }
+        None => {
+            // Nothing to do
+        }
+        _ => {
+            assert!(false);
+        }
+    }
+
     // This is a .send call and we need to adjust the stack
     if flags & VM_CALL_OPT_SEND != 0 {
         handle_opt_send_shift_stack(asm, argc as i32, ctx);
@@ -4229,21 +4292,16 @@ fn gen_send_cfunc(
     // Store incremented PC into current control frame in case callee raises.
     jit_save_pc(jit, asm);
 
-    if let Some(block_iseq) = block {
-        // Change cfp->block_code in the current frame. See vm_caller_setup_arg_block().
-        // VM_CFP_TO_CAPTURED_BLOCK does &cfp->self, rb_captured_block->code.iseq aliases
-        // with cfp->block_code.
-        asm.mov(Opnd::mem(64, CFP, RUBY_OFFSET_CFP_BLOCK_CODE), VALUE::from(block_iseq).into());
-    }
-
     // Increment the stack pointer by 3 (in the callee)
     // sp += 3
     let sp = asm.lea(ctx.sp_opnd((SIZEOF_VALUE as isize) * 3));
 
-    let frame_block_handler = if let Some(_block_iseq) = block {
-        BlockHandler::CurrentFrame
+    let specval = if block_arg_type == Some(Type::BlockParamProxy) {
+        SpecVal::BlockParamProxy
+    } else if let Some(block_iseq) = block {
+        SpecVal::BlockISeq(block_iseq)
     } else {
-        BlockHandler::None
+        SpecVal::None
     };
 
     let mut frame_type = VM_FRAME_MAGIC_CFUNC | VM_FRAME_FLAG_CFRAME | VM_ENV_FLAG_LOCAL;
@@ -4253,11 +4311,10 @@ fn gen_send_cfunc(
 
     gen_push_frame(jit, ctx, asm, false, ControlFrame {
         frame_type,
-        block_handler: frame_block_handler,
+        specval,
         cme,
         recv,
         sp,
-        prev_ep: None,
         pc: Some(0),
         iseq: None,
         local_size: 0,
@@ -4606,6 +4663,26 @@ fn gen_send_iseq(
         return CantCompile;
     }
 
+    let block_arg = flags & VM_CALL_ARGS_BLOCKARG != 0;
+    let block_arg_type = if block_arg {
+        Some(ctx.get_opnd_type(StackOpnd(0)))
+    } else {
+        None
+    };
+
+    match block_arg_type {
+        Some(Type::Nil | Type::BlockParamProxy) => {
+            // We'll handle this later
+        }
+        None => {
+            // Nothing to do
+        }
+        _ => {
+            gen_counter_incr!(asm, send_block_arg);
+            return CantCompile;
+        }
+    }
+
     // If we have unfilled optional arguments and keyword arguments then we
     // would need to move adjust the arguments location to account for that.
     // For now we aren't handling this case.
@@ -4699,6 +4776,23 @@ fn gen_send_iseq(
 
     // Check for interrupts
     gen_check_ints(asm, side_exit);
+
+    match block_arg_type {
+        Some(Type::Nil) => {
+            // We have a nil block arg, so let's pop it off the args
+            ctx.stack_pop(1);
+        }
+        Some(Type::BlockParamProxy) => {
+            // We don't need the actual stack value
+            ctx.stack_pop(1);
+        }
+        None => {
+            // Nothing to do
+        }
+        _ => {
+            assert!(false);
+        }
+    }
 
     let leaf_builtin_raw = unsafe { rb_leaf_builtin_function(iseq) };
     let leaf_builtin: Option<*const rb_builtin_function> = if leaf_builtin_raw.is_null() {
@@ -4914,32 +5008,30 @@ fn gen_send_iseq(
     // Store the next PC in the current frame
     jit_save_pc(jit, asm);
 
-    if let Some(block_val) = block {
-        // Change cfp->block_code in the current frame. See vm_caller_setup_arg_block().
-        // VM_CFP_TO_CAPTURED_BLCOK does &cfp->self, rb_captured_block->code.iseq aliases
-        // with cfp->block_code.
-        asm.store(Opnd::mem(64, CFP, RUBY_OFFSET_CFP_BLOCK_CODE), VALUE(block_val as usize).into());
-    }
-
     // Adjust the callee's stack pointer
     let offs =
         (SIZEOF_VALUE as isize) * (3 + (num_locals as isize) + if doing_kw_call { 1 } else { 0 });
     let callee_sp = asm.lea(ctx.sp_opnd(offs));
 
-    let frame_block_handler = if let Some(_) = block {
-        BlockHandler::CurrentFrame
+    let specval = if let Some(prev_ep) = prev_ep {
+        // We've already side-exited if the callee expects a block, so we
+        // ignore any supplied block here
+        SpecVal::PrevEP(prev_ep)
+    } else if block_arg_type == Some(Type::BlockParamProxy) {
+        SpecVal::BlockParamProxy
+    } else if let Some(block_val) = block {
+        SpecVal::BlockISeq(block_val)
     } else {
-        BlockHandler::None
+        SpecVal::None
     };
 
     // Setup the new frame
     gen_push_frame(jit, ctx, asm, true, ControlFrame {
         frame_type,
-        block_handler: frame_block_handler,
+        specval,
         cme,
         recv,
         sp: callee_sp,
-        prev_ep,
         iseq: Some(iseq),
         pc: None, // We are calling into jitted code, which will set the PC as necessary
         local_size: num_locals
@@ -4957,7 +5049,7 @@ fn gen_send_iseq(
     };
 
     // Create a context for the callee
-    let mut callee_ctx = Context::new(); // Was DEFAULT_CTX
+    let mut callee_ctx = Context::default();
 
     // Set the argument types in the callee's context
     for arg_idx in 0..argc {
@@ -5146,26 +5238,23 @@ fn gen_send_general(
         return CantCompile;
     }
 
-    if flags & VM_CALL_ARGS_BLOCKARG != 0 {
-        gen_counter_incr!(asm, send_block_arg);
-        return CantCompile;
-    }
-
     // Defer compilation so we can specialize on class of receiver
     if !jit_at_current_insn(jit) {
         defer_compilation(jit, ctx, asm, ocb);
         return EndBlock;
     }
 
-    let comptime_recv = jit_peek_at_stack(jit, ctx, argc as isize);
+    let recv_idx = argc + if flags & VM_CALL_ARGS_BLOCKARG != 0 { 1 } else { 0 };
+
+    let comptime_recv = jit_peek_at_stack(jit, ctx, recv_idx as isize);
     let comptime_recv_klass = comptime_recv.class_of();
 
     // Guard that the receiver has the same class as the one from compile time
     let side_exit = get_side_exit(jit, ocb, ctx);
 
     // Points to the receiver operand on the stack
-    let recv = ctx.stack_opnd(argc);
-    let recv_opnd = StackOpnd(argc.try_into().unwrap());
+    let recv = ctx.stack_opnd(recv_idx);
+    let recv_opnd = StackOpnd(recv_idx.try_into().unwrap());
     jit_guard_known_klass(
         jit,
         ctx,
@@ -5273,6 +5362,11 @@ fn gen_send_general(
 
                 let ivar_name = unsafe { get_cme_def_body_attr_id(cme) };
 
+                if flags & VM_CALL_ARGS_BLOCKARG != 0 {
+                    gen_counter_incr!(asm, send_block_arg);
+                    return CantCompile;
+                }
+
                 return gen_get_ivar(
                     jit,
                     ctx,
@@ -5297,6 +5391,9 @@ fn gen_send_general(
                     // Can't generate code for firing c_call and c_return events
                     // See :attr-tracing:
                     gen_counter_incr!(asm, send_cfunc_tracing);
+                    return CantCompile;
+                } else if flags & VM_CALL_ARGS_BLOCKARG != 0 {
+                    gen_counter_incr!(asm, send_block_arg);
                     return CantCompile;
                 } else {
                     let ivar_name = unsafe { get_cme_def_body_attr_id(cme) };
@@ -5326,6 +5423,10 @@ fn gen_send_general(
             }
             // Send family of methods, e.g. call/apply
             VM_METHOD_TYPE_OPTIMIZED => {
+                if flags & VM_CALL_ARGS_BLOCKARG != 0 {
+                    gen_counter_incr!(asm, send_block_arg);
+                    return CantCompile;
+                }
 
                 let opt_type = unsafe { get_cme_def_body_optimized_type(cme) };
                 match opt_type {
@@ -6191,7 +6292,7 @@ fn gen_getblockparamproxy(
         // Push rb_block_param_proxy. It's a root, so no need to use jit_mov_gc_ptr.
         assert!(!unsafe { rb_block_param_proxy }.special_const_p());
 
-        let top = ctx.stack_push(Type::Unknown);
+        let top = ctx.stack_push(Type::BlockParamProxy);
         asm.mov(top, Opnd::const_ptr(unsafe { rb_block_param_proxy }.as_ptr()));
     }
 
@@ -6769,7 +6870,7 @@ mod tests {
 
         return (
             JITState::new(&block),
-            Context::new(),
+            Context::default(),
             Assembler::new(),
             CodeBlock::new_dummy(256 * 1024),
             OutlinedCb::wrap(CodeBlock::new_dummy(256 * 1024)),
@@ -6812,18 +6913,19 @@ mod tests {
         asm.compile(&mut cb);
 
         assert_eq!(status, KeepCompiling);
-        assert_eq!(context.diff(&Context::new()), 0);
+        assert_eq!(context.diff(&Context::default()), 0);
         assert_eq!(cb.get_write_pos(), 0);
     }
 
     #[test]
     fn test_gen_pop() {
         let (mut jit, _, mut asm, _cb, mut ocb) = setup_codegen();
-        let mut context = Context::new_with_stack_size(1);
+        let mut context = Context::default();
+        context.stack_push(Type::Fixnum);
         let status = gen_pop(&mut jit, &mut context, &mut asm, &mut ocb);
 
         assert_eq!(status, KeepCompiling);
-        assert_eq!(context.diff(&Context::new()), 0);
+        assert_eq!(context.diff(&Context::default()), 0);
     }
 
     #[test]

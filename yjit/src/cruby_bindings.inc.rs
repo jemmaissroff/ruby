@@ -1420,6 +1420,9 @@ extern "C" {
     pub fn rb_get_iseq_body_local_iseq(iseq: *const rb_iseq_t) -> *const rb_iseq_t;
 }
 extern "C" {
+    pub fn rb_get_iseq_body_parent_iseq(iseq: *const rb_iseq_t) -> *const rb_iseq_t;
+}
+extern "C" {
     pub fn rb_get_iseq_body_local_table_size(iseq: *const rb_iseq_t) -> ::std::os::raw::c_uint;
 }
 extern "C" {

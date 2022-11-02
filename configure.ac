@@ -785,7 +785,8 @@ AS_IF([test "$GCC" = yes], [
 				 [disable -D_FORTIFY_SOURCE=2 option, which causes link error on mingw]),
 		  [fortify_source=$enableval])
     AS_IF([test "x$fortify_source" != xno], [
-        RUBY_TRY_CFLAGS([$optflags -D_FORTIFY_SOURCE=2], [RUBY_APPEND_OPTION(XCFLAGS, -D_FORTIFY_SOURCE=2)], [],
+        RUBY_TRY_CFLAGS([$optflags -D_FORTIFY_SOURCE=2],
+                        [RUBY_APPEND_OPTION(XCFLAGS, -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2)], [],
                         [@%:@include <stdio.h>])
     ])
 
@@ -793,7 +794,7 @@ AS_IF([test "$GCC" = yes], [
 
     # -fstack-protector
     AS_CASE(["$target_os"],
-    [mingw*|emscripten*|wasi*], [
+    [emscripten*|wasi*], [
 	stack_protector=no
     ])
     AS_IF([test -z "${stack_protector+set}"], [
@@ -805,6 +806,8 @@ AS_IF([test "$GCC" = yes], [
 	    AS_IF([test "x$stack_protector" = xyes], [stack_protector=option; break])
 	])
     ])
+    AC_MSG_CHECKING([for -fstack-protector])
+    AC_MSG_RESULT(["$stack_protector"])
     AS_CASE(["$stack_protector"], [-*], [
 	RUBY_APPEND_OPTION(XCFLAGS, $stack_protector)
 	RUBY_APPEND_OPTION(XLDFLAGS, $stack_protector)

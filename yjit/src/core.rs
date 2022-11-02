@@ -44,6 +44,9 @@ pub enum Type {
 
     TString, // An object with the T_STRING flag set, possibly an rb_cString
     CString, // An un-subclassed string of type rb_cString (can have instance vars in some cases)
+
+    BlockParamProxy, // A special sentinel value indicating the block parameter should be read from
+                     // the current surrounding cfp
 }
 
 // Default initialization
@@ -78,6 +81,12 @@ impl Type {
             #[cfg(not(test))]
             if val.class_of() == unsafe { rb_cString } {
                 return Type::CString;
+            }
+            // We likewise can't reference rb_block_param_proxy, but it's again an optimisation;
+            // we can just treat it as a normal Object.
+            #[cfg(not(test))]
+            if val == unsafe { rb_block_param_proxy } {
+                return Type::BlockParamProxy;
             }
             match val.builtin_type() {
                 RUBY_T_ARRAY => Type::Array,
@@ -142,7 +151,8 @@ impl Type {
             Type::Hash => Some(RUBY_T_HASH),
             Type::ImmSymbol | Type::HeapSymbol => Some(RUBY_T_SYMBOL),
             Type::TString | Type::CString => Some(RUBY_T_STRING),
-            Type::Unknown | Type::UnknownImm | Type::UnknownHeap => None
+            Type::Unknown | Type::UnknownImm | Type::UnknownHeap => None,
+            Type::BlockParamProxy => None,
         }
     }
 
@@ -836,7 +846,12 @@ pub fn limit_block_versions(blockid: BlockId, ctx: &Context) -> Context {
         generic_ctx.stack_size = ctx.stack_size;
         generic_ctx.sp_offset = ctx.sp_offset;
 
-        // Mutate the incoming context
+        debug_assert_ne!(
+            usize::MAX,
+            ctx.diff(&generic_ctx),
+            "should substitute a compatible context",
+        );
+
         return generic_ctx;
     }
 
@@ -995,22 +1010,6 @@ impl Block {
 }
 
 impl Context {
-    pub fn new_with_stack_size(size: i16) -> Self {
-        return Context {
-            stack_size: size as u16,
-            sp_offset: size,
-            chain_depth: 0,
-            local_types: [Type::Unknown; MAX_LOCAL_TYPES],
-            temp_types: [Type::Unknown; MAX_TEMP_TYPES],
-            self_type: Type::Unknown,
-            temp_mapping: [MapToStack; MAX_TEMP_TYPES],
-        };
-    }
-
-    pub fn new() -> Self {
-        return Self::new_with_stack_size(0);
-    }
-
     pub fn get_stack_size(&self) -> u16 {
         self.stack_size
     }

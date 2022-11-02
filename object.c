@@ -340,7 +340,10 @@ init_copy(VALUE dest, VALUE obj)
     rb_copy_wb_protected_attribute(dest, obj);
     rb_copy_generic_ivar(dest, obj);
     rb_gc_copy_finalizer(dest, obj);
-    rb_obj_copy_ivar(dest, obj);
+
+    if (!RB_TYPE_P(obj, T_CLASS) && !RB_TYPE_P(obj, T_MODULE)) {
+        rb_obj_copy_ivar(dest, obj);
+    }
 }
 
 static VALUE immutable_obj_clone(VALUE obj, VALUE kwfreeze);

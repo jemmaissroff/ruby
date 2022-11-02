@@ -51,9 +51,10 @@ rb_shape_get_shape_by_id_without_assertion(shape_id_t shape_id)
 }
 
 #if !SHAPE_IN_BASIC_FLAGS
-static inline shape_id_t
-RCLASS_SHAPE_ID(VALUE obj)
+shape_id_t
+rb_rclass_shape_id(VALUE obj)
 {
+    RUBY_ASSERT(RB_TYPE_P(obj, T_CLASS) || RB_TYPE_P(obj, T_MODULE));
     return RCLASS_EXT(obj)->shape_id;
 }
 
