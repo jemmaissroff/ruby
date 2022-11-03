@@ -184,7 +184,6 @@ ROBJECT_NUMIV(VALUE obj)
     return ROBJECT(obj)->numiv;
 #else
     if (RB_FL_ANY_RAW(obj, ROBJECT_EMBED)) {
-        RUBY_ASSERT(ROBJECT_IV_CAPACITY(obj) == ROBJECT_EMBED_LEN_MAX);
         return ROBJECT_EMBED_LEN_MAX;
     }
     else {
