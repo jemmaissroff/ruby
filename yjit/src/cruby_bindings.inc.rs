@@ -422,6 +422,7 @@ pub struct rb_shape {
     pub next_iv_index: attr_index_t,
     pub capacity: u32,
     pub type_: u8,
+    pub size_pool_index: u8,
     pub parent_id: shape_id_t,
 }
 pub type rb_shape_t = rb_shape;

@@ -628,6 +628,7 @@ module RubyVM::MJIT
       next_iv_index: [self.attr_index_t, Primitive.cexpr!("OFFSETOF((*((struct rb_shape *)NULL)), next_iv_index)")],
       capacity: [CType::Immediate.parse("uint32_t"), Primitive.cexpr!("OFFSETOF((*((struct rb_shape *)NULL)), capacity)")],
       type: [CType::Immediate.parse("uint8_t"), Primitive.cexpr!("OFFSETOF((*((struct rb_shape *)NULL)), type)")],
+      size_pool_index: [CType::Immediate.parse("uint8_t"), Primitive.cexpr!("OFFSETOF((*((struct rb_shape *)NULL)), size_pool_index)")],
       parent_id: [self.shape_id_t, Primitive.cexpr!("OFFSETOF((*((struct rb_shape *)NULL)), parent_id)")],
     )
   end
