@@ -1377,6 +1377,7 @@ rb_ensure_iv_list_size(VALUE obj, uint32_t current_capacity, uint32_t new_capaci
     else {
         newptr = obj_ivar_heap_realloc(obj, current_capacity, new_capacity);
     }
+    ROBJECT_SET_NUMIV(obj, new_capacity);
 }
 
 struct gen_ivtbl *
