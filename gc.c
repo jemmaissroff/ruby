@@ -6067,11 +6067,6 @@ invalidate_moved_plane(rb_objspace_t *objspace, struct heap_page *page, uintptr_
                     /* forwarding_object is now our actual object, and "object"
                      * is the free slot for the original page */
 
-                    rb_shape_t * shape = rb_shape_get_shape(forwarding_object);
-                    if (shape->type == SHAPE_SIZE_POOL_CHANGE) {
-                        rb_shape_set_shape_id(forwarding_object, shape->parent_id);
-                    }
-
                     struct heap_page *orig_page = GET_HEAP_PAGE(object);
                     orig_page->free_slots++;
                     heap_page_add_freeobj(objspace, orig_page, object);
@@ -8454,10 +8449,6 @@ gc_compact_move(rb_objspace_t *objspace, rb_heap_t *heap, rb_size_pool_t *size_p
         }
     }
 
-    if (BUILTIN_TYPE(src) == T_MOVED && dheap != heap) {
-        VALUE dest = ((struct RMoved *)src)->destination;
-        rb_shape_transition_obj_size_pool_change(dest, size_pool_index);
-    }
     return true;
 }
 

@@ -145,7 +145,6 @@ get_next_shape_internal(rb_shape_t* shape, ID id, enum shape_type shape_type)
                   case SHAPE_CAPACITY_CHANGE:
                   case SHAPE_IVAR_UNDEF:
                   case SHAPE_FROZEN:
-                  case SHAPE_SIZE_POOL_CHANGE:
                     new_shape->next_iv_index = shape->next_iv_index;
                     break;
                   case SHAPE_INITIAL_CAPACITY:
@@ -251,14 +250,6 @@ rb_shape_transition_shape_capa(rb_shape_t* shape, uint32_t new_capacity)
     return new_shape;
 }
 
-void
-rb_shape_transition_obj_size_pool_change(VALUE obj, size_t size_pool_index)
-{
-    rb_shape_t * shape = get_next_shape_internal(rb_shape_get_shape(obj), size_pool_edge_names[size_pool_index], SHAPE_SIZE_POOL_CHANGE);
-    shape->size_pool_index = size_pool_index;
-    rb_shape_set_shape(obj, shape);
-}
-
 bool
 rb_shape_get_iv_index(rb_shape_t * shape, ID id, attr_index_t *value)
 {
@@ -275,7 +266,6 @@ rb_shape_get_iv_index(rb_shape_t * shape, ID id, attr_index_t *value)
               case SHAPE_CAPACITY_CHANGE:
               case SHAPE_IVAR_UNDEF:
               case SHAPE_ROOT:
-              case SHAPE_SIZE_POOL_CHANGE:
               case SHAPE_INITIAL_CAPACITY:
                 return false;
               case SHAPE_FROZEN:
@@ -367,7 +357,6 @@ rb_shape_rebuild_shape(rb_shape_t * initial_shape, rb_shape_t * dest_shape)
             break;
         case SHAPE_ROOT:
         case SHAPE_FROZEN:
-        case SHAPE_SIZE_POOL_CHANGE:
         case SHAPE_CAPACITY_CHANGE:
             break;
     }

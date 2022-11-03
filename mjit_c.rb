@@ -33,10 +33,6 @@ module RubyVM::MJIT
       Primitive.cexpr! 'UINT2NUM(SHAPE_IVAR_UNDEF)'
     end
 
-    def SHAPE_SIZE_POOL_CHANGE
-      Primitive.cexpr! 'UINT2NUM(SHAPE_SIZE_POOL_CHANGE)'
-    end
-
     def SHAPE_INITIAL_CAPACITY
       Primitive.cexpr! 'UINT2NUM(SHAPE_INITIAL_CAPACITY)'
     end
