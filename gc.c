@@ -2929,10 +2929,10 @@ rb_class_instance_allocate_internal(VALUE klass, VALUE flags, bool wb_protected)
     GC_ASSERT((flags & RUBY_T_MASK) == T_OBJECT);
     GC_ASSERT(flags & ROBJECT_EMBED);
 
-    uint32_t index_tbl_num_entries = RCLASS_EXT(klass)->max_iv_count;
-
     size_t size;
 #if USE_RVARGC
+    uint32_t index_tbl_num_entries = RCLASS_EXT(klass)->max_iv_count;
+
     size = rb_obj_embedded_size(index_tbl_num_entries);
     if (!rb_gc_size_allocatable_p(size)) {
         size = sizeof(struct RObject);
@@ -10014,9 +10014,10 @@ static void
 gc_ref_update_object(rb_objspace_t *objspace, VALUE v)
 {
     VALUE *ptr = ROBJECT_IVPTR(v);
-    uint32_t numiv = ROBJECT_NUMIV(v);
 
 #if USE_RVARGC
+    uint32_t numiv = ROBJECT_NUMIV(v);
+
     size_t slot_size = rb_gc_obj_slot_size(v);
     size_t embed_size = rb_obj_embedded_size(numiv);
     if (slot_size >= embed_size && !RB_FL_TEST_RAW(v, ROBJECT_EMBED)) {
