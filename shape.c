@@ -255,6 +255,7 @@ void
 rb_shape_transition_obj_size_pool_change(VALUE obj, size_t size_pool_index)
 {
     rb_shape_t * shape = get_next_shape_internal(rb_shape_get_shape(obj), size_pool_edge_names[size_pool_index], SHAPE_SIZE_POOL_CHANGE);
+    shape->size_pool_index = size_pool_index;
     rb_shape_set_shape(obj, shape);
 }
 
@@ -314,9 +315,18 @@ rb_shape_alloc_with_parent_id(ID edge_name, shape_id_t parent_id)
 }
 
 rb_shape_t *
+rb_shape_alloc_with_size_pool_index(ID edge_name, rb_shape_t * parent, uint8_t size_pool_index)
+{
+    rb_shape_t * shape = rb_shape_alloc_with_parent_id(edge_name, rb_shape_id(parent));
+    shape->size_pool_index = size_pool_index;
+    return shape;
+}
+
+
+rb_shape_t *
 rb_shape_alloc(ID edge_name, rb_shape_t * parent)
 {
-    return rb_shape_alloc_with_parent_id(edge_name, rb_shape_id(parent));
+    return rb_shape_alloc_with_size_pool_index(edge_name, parent, parent->size_pool_index);
 }
 
 MJIT_FUNC_EXPORTED void
@@ -487,6 +497,15 @@ rb_shape_next_iv_index(VALUE self)
 }
 
 static VALUE
+rb_shape_size_pool_index(VALUE self)
+{
+    rb_shape_t* shape;
+    TypedData_Get_Struct(self, rb_shape_t, &shape_data_type, shape);
+
+    return INT2NUM(shape->size_pool_index);
+}
+
+static VALUE
 rb_shape_export_depth(VALUE self)
 {
     rb_shape_t* shape;
@@ -597,6 +616,7 @@ Init_default_shapes(void)
     rb_shape_t * root = rb_shape_alloc_with_parent_id(0, INVALID_SHAPE_ID);
     root->capacity = (uint32_t)((rb_size_pool_slot_size(0) - offsetof(struct RObject, as.ary)) / sizeof(VALUE));
     root->type = SHAPE_ROOT;
+    root->size_pool_index = 0;
     GET_VM()->root_shape = root;
     RUBY_ASSERT(rb_shape_id(GET_VM()->root_shape) == ROOT_SHAPE_ID);
 
@@ -605,6 +625,7 @@ Init_default_shapes(void)
         uint32_t capa = (uint32_t)((rb_size_pool_slot_size(i) - offsetof(struct RObject, as.ary)) / sizeof(VALUE));
         rb_shape_t * new_shape = rb_shape_transition_shape_capa(root, capa);
         new_shape->type = SHAPE_INITIAL_CAPACITY;
+        new_shape->size_pool_index = i;
         RUBY_ASSERT(rb_shape_id(new_shape) == (shape_id_t)i);
     }
 
@@ -630,6 +651,7 @@ Init_shape(void)
     rb_define_method(rb_cShape, "edges", rb_shape_edges, 0);
     rb_define_method(rb_cShape, "edge_name", rb_shape_edge_name, 0);
     rb_define_method(rb_cShape, "next_iv_index", rb_shape_next_iv_index, 0);
+    rb_define_method(rb_cShape, "size_pool_index", rb_shape_size_pool_index, 0);
     rb_define_method(rb_cShape, "depth", rb_shape_export_depth, 0);
     rb_define_method(rb_cShape, "id", rb_wrapped_shape_id, 0);
     rb_define_method(rb_cShape, "type", rb_shape_type, 0);

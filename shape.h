@@ -48,6 +48,7 @@ struct rb_shape {
     attr_index_t next_iv_index;
     uint32_t capacity; // Total capacity of the current object
     uint8_t type;
+    uint8_t size_pool_index;
     shape_id_t parent_id;
 };
 
@@ -181,6 +182,7 @@ RCLASS_IV_COUNT(VALUE obj)
 }
 
 rb_shape_t * rb_shape_alloc(ID edge_name, rb_shape_t * parent);
+rb_shape_t * rb_shape_alloc_with_size_pool_index(ID edge_name, rb_shape_t * parent, uint8_t size_pool_index);
 rb_shape_t * rb_shape_alloc_with_parent_id(ID edge_name, shape_id_t parent_id);
 
 bool rb_shape_set_shape_id(VALUE obj, shape_id_t shape_id);

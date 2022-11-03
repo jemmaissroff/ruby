@@ -276,7 +276,7 @@ rb_obj_copy_ivar(VALUE dest, VALUE obj)
     RUBY_ASSERT(BUILTIN_TYPE(dest) == BUILTIN_TYPE(obj));
     uint32_t src_num_ivs = RBASIC_IV_COUNT(obj);
     rb_shape_t * src_shape = rb_shape_get_shape(obj);
-    rb_shape_t * dest_shape = src_shape;
+    rb_shape_t * shape_to_set_on_dest = src_shape;
     VALUE * src_buf;
     VALUE * dest_buf;
 
@@ -286,7 +286,7 @@ rb_obj_copy_ivar(VALUE dest, VALUE obj)
 
     // The copy should be mutable, so we don't want the frozen shape
     if (rb_shape_frozen_shape_p(src_shape)) {
-        dest_shape = rb_shape_get_shape_by_id(src_shape->parent_id);
+        shape_to_set_on_dest = rb_shape_get_shape_by_id(src_shape->parent_id);
     }
 
     switch(BUILTIN_TYPE(obj)) {
@@ -294,16 +294,16 @@ rb_obj_copy_ivar(VALUE dest, VALUE obj)
             src_buf = ROBJECT_IVPTR(obj);
             dest_buf = ROBJECT_IVPTR(dest);
 
-            if (RB_FL_ANY_RAW(dest, ROBJECT_EMBED) != RB_FL_ANY_RAW(obj, ROBJECT_EMBED) || ROBJECT_NUMIV(dest) != ROBJECT_NUMIV(obj)) {
+            if (rb_shape_get_shape(dest)->size_pool_index != src_shape->size_pool_index) {
                 // We have to rebuild the shape
                 rb_shape_t * initial_shape = rb_shape_get_shape(dest);
                 RUBY_ASSERT(initial_shape->parent_id == ROOT_SHAPE_ID || initial_shape->type == SHAPE_ROOT);
 
-                dest_shape = rb_shape_rebuild_shape(initial_shape, src_shape);
+                shape_to_set_on_dest = rb_shape_rebuild_shape(initial_shape, src_shape);
             }
 
             if (ROBJECT_NUMIV(dest) < src_num_ivs) {
-                rb_ensure_iv_list_size(dest, ROBJECT_NUMIV(dest), dest_shape->capacity);
+                rb_ensure_iv_list_size(dest, ROBJECT_NUMIV(dest), shape_to_set_on_dest->capacity);
                 dest_buf = ROBJECT_IVPTR(dest);
             }
             break;
@@ -325,7 +325,8 @@ rb_obj_copy_ivar(VALUE dest, VALUE obj)
     for (uint32_t i = 0; i < src_num_ivs; i++) {
         RB_OBJ_WRITTEN(dest, Qundef, dest_buf[i]);
     }
-    rb_shape_set_shape(dest, dest_shape);
+
+    rb_shape_set_shape(dest, shape_to_set_on_dest);
 }
 
 static void

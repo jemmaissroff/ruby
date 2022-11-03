@@ -8457,7 +8457,6 @@ gc_compact_move(rb_objspace_t *objspace, rb_heap_t *heap, rb_size_pool_t *size_p
     if (BUILTIN_TYPE(src) == T_MOVED && dheap != heap) {
         VALUE dest = ((struct RMoved *)src)->destination;
         rb_shape_transition_obj_size_pool_change(dest, size_pool_index);
-        // do our transition on dest
     }
     return true;
 }
