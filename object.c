@@ -314,7 +314,8 @@ rb_obj_copy_ivar(VALUE dest, VALUE obj)
                 shape_to_set_on_dest = rb_shape_rebuild_shape(initial_shape, src_shape);
             }
 
-            if (ROBJECT_NUMIV(dest) < src_num_ivs) {
+            RUBY_ASSERT(src_num_ivs <= shape_to_set_on_dest->capacity);
+            if (ROBJECT_NUMIV(dest) < shape_to_set_on_dest->capacity) {
                 rb_ensure_iv_list_size(dest, ROBJECT_NUMIV(dest), shape_to_set_on_dest->capacity);
                 dest_buf = ROBJECT_IVPTR(dest);
             }
