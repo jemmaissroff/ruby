@@ -1290,6 +1290,18 @@ ALWAYS_INLINE(static VALUE vm_setivar_slowpath(VALUE obj, ID id, VALUE val, cons
 NOINLINE(static VALUE vm_setivar_slowpath_ivar(VALUE obj, ID id, VALUE val, const rb_iseq_t *iseq, IVC ic));
 NOINLINE(static VALUE vm_setivar_slowpath_attr(VALUE obj, ID id, VALUE val, const struct rb_callcache *cc));
 
+static void
+make_assertion(VALUE obj)
+{
+
+#if RUBY_DEBUG
+    if(RB_TYPE_P(obj, T_OBJECT) && ROBJECT_IV_CAPACITY(obj) != ROBJECT_NUMIV(obj)) {
+        fprintf(stderr, "shape capa: %d, obj capa: %d\n", ROBJECT_IV_CAPACITY(obj), ROBJECT_NUMIV(obj));
+    }
+#endif
+    RUBY_ASSERT(!RB_TYPE_P(obj, T_OBJECT) || ROBJECT_IV_CAPACITY(obj) == ROBJECT_NUMIV(obj));
+}
+
 static VALUE
 vm_setivar_slowpath(VALUE obj, ID id, VALUE val, const rb_iseq_t *iseq, IVC ic, const struct rb_callcache *cc, int is_attr)
 {
@@ -1300,6 +1312,7 @@ vm_setivar_slowpath(VALUE obj, ID id, VALUE val, const rb_iseq_t *iseq, IVC ic, 
             rb_check_frozen_internal(obj);
 
             attr_index_t index;
+            make_assertion(obj);
 
             uint32_t num_iv = ROBJECT_NUMIV(obj);
             rb_shape_t* shape = rb_shape_get_shape(obj);
@@ -1325,6 +1338,10 @@ vm_setivar_slowpath(VALUE obj, ID id, VALUE val, const rb_iseq_t *iseq, IVC ic, 
                 next_shape_id = rb_shape_id(next_shape);
 
                 rb_shape_set_shape(obj, next_shape);
+                make_assertion(obj);
+            }
+            else {
+                make_assertion(obj);
             }
 
             populate_cache(index, next_shape_id, id, iseq, ic, cc, is_attr);
@@ -1332,7 +1349,7 @@ vm_setivar_slowpath(VALUE obj, ID id, VALUE val, const rb_iseq_t *iseq, IVC ic, 
             VALUE *ptr = ROBJECT_IVPTR(obj);
             RB_OBJ_WRITE(obj, &ptr[index], val);
             RB_DEBUG_COUNTER_INC(ivar_set_ic_miss_iv_hit);
-            RUBY_ASSERT(ROBJECT_IV_CAPACITY(obj) == ROBJECT_NUMIV(obj));
+            make_assertion(obj);
             return val;
         }
       case T_CLASS:
