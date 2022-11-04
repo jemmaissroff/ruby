@@ -10026,6 +10026,12 @@ gc_ref_update_object(rb_objspace_t *objspace, VALUE v)
         rb_shape_t * initial_shape = rb_shape_get_shape_by_id((shape_id_t)size_pool_shape_id);
         rb_shape_t * new_shape = rb_shape_rebuild_shape(initial_shape, rb_shape_get_shape(v));
         rb_shape_set_shape(v, new_shape);
+#if RUBY_DEBUG
+        if(RB_TYPE_P(v, T_OBJECT) && ROBJECT_IV_CAPACITY(v) != ROBJECT_NUMIV(v)) {
+            fprintf(stderr, "shape capa: %d, v capa: %d\n", ROBJECT_IV_CAPACITY(v), ROBJECT_NUMIV(v));
+        }
+#endif
+        RUBY_ASSERT(!RB_TYPE_P(v, T_OBJECT) || ROBJECT_IV_CAPACITY(v) == ROBJECT_NUMIV(v));
     }
 #endif
 
