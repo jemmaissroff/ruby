@@ -265,18 +265,6 @@ rb_obj_singleton_class(VALUE obj)
     return rb_singleton_class(obj);
 }
 
-static void
-make_assertion(VALUE obj)
-{
-
-#if RUBY_DEBUG
-    if(RB_TYPE_P(obj, T_OBJECT) && ROBJECT_IV_CAPACITY(obj) != ROBJECT_NUMIV(obj)) {
-        fprintf(stderr, "shape capa: %d, obj capa: %d\n", ROBJECT_IV_CAPACITY(obj), ROBJECT_NUMIV(obj));
-    }
-#endif
-    RUBY_ASSERT(!RB_TYPE_P(obj, T_OBJECT) || ROBJECT_IV_CAPACITY(obj) == ROBJECT_NUMIV(obj));
-}
-
 /*! \private */
 MJIT_FUNC_EXPORTED void
 rb_obj_copy_ivar(VALUE dest, VALUE obj)
@@ -341,7 +329,6 @@ rb_obj_copy_ivar(VALUE dest, VALUE obj)
     }
 
     rb_shape_set_shape(dest, shape_to_set_on_dest);
-    make_assertion(dest);
     RUBY_ASSERT(!RB_TYPE_P(obj, T_OBJECT) || ROBJECT_IV_CAPACITY(dest) == ROBJECT_NUMIV(dest));
 }
 

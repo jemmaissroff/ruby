@@ -1400,18 +1400,6 @@ rb_ensure_generic_iv_list_size(VALUE obj, uint32_t newsize)
     return ivtbl;
 }
 
-static void
-make_assertion(VALUE obj)
-{
-
-#if RUBY_DEBUG
-    if(RB_TYPE_P(obj, T_OBJECT) && ROBJECT_IV_CAPACITY(obj) != ROBJECT_NUMIV(obj)) {
-        fprintf(stderr, "shape capa: %d, obj capa: %d\n", ROBJECT_IV_CAPACITY(obj), ROBJECT_NUMIV(obj));
-    }
-#endif
-    RUBY_ASSERT(!RB_TYPE_P(obj, T_OBJECT) || ROBJECT_IV_CAPACITY(obj) == ROBJECT_NUMIV(obj));
-}
-
 // @note May raise when there are too many instance variables.
 rb_shape_t *
 rb_grow_iv_list(VALUE obj)
@@ -1430,7 +1418,7 @@ rb_grow_iv_list(VALUE obj)
 
     res = rb_shape_transition_shape_capa(rb_shape_get_shape(obj), newsize);
     rb_shape_set_shape(obj, res);
-    make_assertion(obj);
+    RUBY_ASSERT(!RB_TYPE_P(obj, T_OBJECT) || ROBJECT_IV_CAPACITY(obj) == ROBJECT_NUMIV(obj));
     return res;
 }
 
@@ -1462,7 +1450,6 @@ obj_ivar_set(VALUE obj, ID id, VALUE val)
         shape = rb_shape_get_next(shape, obj, id);
         RUBY_ASSERT(index == (shape->next_iv_index - 1));
         rb_shape_set_shape(obj, shape);
-        make_assertion(obj);
     }
 
     RB_OBJ_WRITE(obj, &ROBJECT_IVPTR(obj)[index], val);
