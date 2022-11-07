@@ -331,7 +331,7 @@ class TestIOBuffer < Test::Unit::TestCase
 
   def test_read
     io = Tempfile.new
-    io.write("Hello World")
+    io.write("Hello W")
     io.seek(0)
 
     buffer = IO::Buffer.new(128)
