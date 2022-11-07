@@ -217,6 +217,14 @@ make_counters! {
     invokesuper_me_changed,
     invokesuper_block,
 
+    invokeblock_none,
+    invokeblock_iseq_arg0_splat,
+    invokeblock_iseq_block_changed,
+    invokeblock_iseq_tag_changed,
+    invokeblock_ifunc,
+    invokeblock_proc,
+    invokeblock_symbol,
+
     leave_se_interrupt,
     leave_interp_return,
     leave_start_pc_non_zero,
@@ -253,7 +261,6 @@ make_counters! {
     compiled_block_count,
     compilation_failure,
     freed_iseq_count,
-    code_gc_count,
 
     exit_from_branch_stub,
 
@@ -383,6 +390,9 @@ fn rb_yjit_gen_stats_dict() -> VALUE {
 
         // Live pages
         hash_aset_usize!(hash, "live_page_count", cb.num_mapped_pages() - freed_page_count);
+
+        // Code GC count
+        hash_aset_usize!(hash, "code_gc_count", CodegenGlobals::get_code_gc_count());
     }
 
     // If we're not generating stats, the hash is done

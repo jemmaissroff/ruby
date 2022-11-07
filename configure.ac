@@ -3733,10 +3733,52 @@ AS_IF([test x"$MJIT_SUPPORT" = "xyes"],
 
 AC_SUBST(MJIT_SUPPORT)
 
+AC_CHECK_PROG(RUSTC, [rustc], [rustc], [no]) dnl no ac_tool_prefix
+
+dnl check if we can build YJIT on this target platform
+AS_CASE(["$target_cpu"],
+    [arm64|aarch64], [
+        YJIT_TARGET=aarch64
+    ],
+    [x86_64], [
+        YJIT_TARGET="$target_cpu"
+    ],
+    [YJIT_TARGET=]
+)
+AS_CASE(["$YJIT_TARGET:$target_os"],
+    [:*], [ # unsupported CPU
+    ],
+    [darwin*], [
+        YJIT_TARGET=${YJIT_TARGET}-apple-darwin
+    ],
+    [linux-android], [ # no target_vendor
+        YJIT_TARGET=${YJIT_TARGET}-${target_os}
+    ],
+    [*linux*], [
+        YJIT_TARGET=${YJIT_TARGET}-${target_vendor}-${target_os}
+    ],
+    [YJIT_TARGET=]
+)
+
+dnl build YJIT in release mode if rustc >= 1.58.0 is present and we are on a supported platform
 AC_ARG_ENABLE(yjit,
-        AS_HELP_STRING([--enable-yjit],
-        [enable experimental in-process JIT compiler that requires Rust build tools [default=no]]),
-        [YJIT_SUPPORT=$enableval], [YJIT_SUPPORT=no])
+    AS_HELP_STRING([--enable-yjit],
+    [enable experimental in-process JIT compiler that requires Rust build tools [default=no]]),
+    [YJIT_SUPPORT=$enableval],
+    [AS_CASE(["$enable_jit_support:$YJIT_TARGET:$RUSTC"],
+        [no:*|yes::*|yes:*:no], [
+            YJIT_SUPPORT=no
+        ],
+        [yes:yes:*], [
+            AS_IF([ echo "fn main() { let x = 1; format!(\"{x}\"); }" | $RUSTC - --target=$YJIT_TARGET --emit asm=/dev/null ],
+                [YJIT_SUPPORT=yes],
+                [YJIT_SUPPORT=no]
+            )
+        ], [
+            [YJIT_SUPPORT=no]
+        ]
+    )]
+)
 
 CARGO=
 CARGO_BUILD_ARGS=
@@ -3746,7 +3788,6 @@ AS_CASE(["${YJIT_SUPPORT}"],
     AS_IF([test x"$enable_jit_support" = "xno"],
         AC_MSG_ERROR([--disable-jit-support but --enable-yjit. YJIT requires JIT support])
     )
-    AC_CHECK_TOOL(RUSTC, [rustc], [no])
     AS_IF([test x"$RUSTC" = "xno"],
         AC_MSG_ERROR([rustc is required. Installation instructions available at https://www.rust-lang.org/tools/install])
     )
@@ -3783,7 +3824,6 @@ AS_CASE(["${YJIT_SUPPORT}"],
     YJIT_OBJ='yjit.$(OBJEXT)'
     AC_DEFINE(USE_YJIT, 1)
 ], [AC_DEFINE(USE_YJIT, 0)])
-
 
 dnl These variables end up in ::RbConfig::CONFIG
 AC_SUBST(YJIT_SUPPORT)dnl what flavor of YJIT the Ruby build includes

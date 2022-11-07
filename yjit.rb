@@ -187,6 +187,7 @@ module RubyVM::YJIT
       $stderr.puts("***YJIT: Printing YJIT statistics on exit***")
 
       print_counters(stats, prefix: 'send_', prompt: 'method call exit reasons: ')
+      print_counters(stats, prefix: 'invokeblock_', prompt: 'invokeblock exit reasons: ')
       print_counters(stats, prefix: 'invokesuper_', prompt: 'invokesuper exit reasons: ')
       print_counters(stats, prefix: 'leave_', prompt: 'leave exit reasons: ')
       print_counters(stats, prefix: 'gbpp_', prompt: 'getblockparamproxy exit reasons: ')
@@ -230,6 +231,7 @@ module RubyVM::YJIT
       $stderr.puts "code_gc_count:         " + ("%10d" % stats[:code_gc_count])
       $stderr.puts "num_gc_obj_refs:       " + ("%10d" % stats[:num_gc_obj_refs])
 
+      $stderr.puts "side_exit_count:       " + ("%10d" % side_exits)
       $stderr.puts "total_exit_count:      " + ("%10d" % total_exits)
       $stderr.puts "total_insns_count:     " + ("%10d" % total_insns_count)
       $stderr.puts "vm_insns_count:        " + ("%10d" % stats[:vm_insns_count])
