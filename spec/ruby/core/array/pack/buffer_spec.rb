@@ -43,7 +43,7 @@ describe "Array#pack with :buffer option" do
 
     it 'does not keep buffer content if it is longer than offset + result' do
       n = [ 65, 66, 67 ]
-      buffer = "1234567890"
+      buffer = "1234567"
       n.pack("@3ccc", buffer: buffer).should == "123ABC"
     end
   end
