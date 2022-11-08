@@ -294,18 +294,18 @@ rb_obj_copy_ivar(VALUE dest, VALUE obj)
             src_buf = ROBJECT_IVPTR(obj);
             dest_buf = ROBJECT_IVPTR(dest);
 
-            if (rb_shape_get_shape(dest)->size_pool_index != src_shape->size_pool_index) {
+            rb_shape_t * initial_shape = rb_shape_get_shape(dest);
+
+            if (initial_shape->size_pool_index != src_shape->size_pool_index) {
                 // We have to rebuild the shape
-                rb_shape_t * initial_shape = rb_shape_get_shape(dest);
                 RUBY_ASSERT(initial_shape->parent_id == ROOT_SHAPE_ID || initial_shape->type == SHAPE_ROOT);
 
                 shape_to_set_on_dest = rb_shape_rebuild_shape(initial_shape, src_shape);
             }
 
             RUBY_ASSERT(src_num_ivs <= shape_to_set_on_dest->capacity);
-            if (ROBJECT_NUMIV(dest) < shape_to_set_on_dest->capacity) {
-                rb_ensure_iv_list_size(dest, ROBJECT_NUMIV(dest), shape_to_set_on_dest->capacity);
-                RUBY_ASSERT(ROBJECT_NUMIV(dest) == shape_to_set_on_dest->capacity);
+            if (initial_shape->capacity < shape_to_set_on_dest->capacity) {
+                rb_ensure_iv_list_size(dest, initial_shape->capacity, shape_to_set_on_dest->capacity);
                 dest_buf = ROBJECT_IVPTR(dest);
             }
             break;
@@ -329,7 +329,6 @@ rb_obj_copy_ivar(VALUE dest, VALUE obj)
     }
 
     rb_shape_set_shape(dest, shape_to_set_on_dest);
-    RUBY_ASSERT(!RB_TYPE_P(obj, T_OBJECT) || ROBJECT_IV_CAPACITY(dest) == ROBJECT_NUMIV(dest));
 }
 
 static void
