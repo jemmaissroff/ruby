@@ -248,9 +248,9 @@ extern "C" {
 }
 pub const ROBJECT_EMBED: ruby_robject_flags = 8192;
 pub type ruby_robject_flags = u32;
-pub const ROBJECT_OFFSET_AS_HEAP_IVPTR: i32 = 24;
-pub const ROBJECT_OFFSET_AS_HEAP_IV_INDEX_TBL: i32 = 32;
-pub const ROBJECT_OFFSET_AS_ARY: i32 = 24;
+pub const ROBJECT_OFFSET_AS_HEAP_IVPTR: i32 = 16;
+pub const ROBJECT_OFFSET_AS_HEAP_IV_INDEX_TBL: i32 = 24;
+pub const ROBJECT_OFFSET_AS_ARY: i32 = 16;
 extern "C" {
     pub static mut rb_mKernel: VALUE;
 }
