@@ -3028,13 +3028,13 @@ bignew_1(VALUE klass, size_t len, int sign)
     BIGNUM_SET_SIGN(bigv, sign);
     if (len <= BIGNUM_EMBED_LEN_MAX) {
         FL_SET_RAW(bigv, BIGNUM_EMBED_FLAG);
-        BIGNUM_SET_LEN(bigv, len);
         (void)VALGRIND_MAKE_MEM_UNDEFINED((void*)big->as.ary, sizeof(big->as.ary));
     }
     else {
         big->as.heap.digits = ALLOC_N(BDIGIT, len);
-        big->as.heap.len = len;
     }
+
+    BIGNUM_SET_LEN(bigv, len);
     OBJ_FREEZE(bigv);
     return bigv;
 }
@@ -4481,9 +4481,6 @@ rb_ull2big(unsigned LONG_LONG n)
     }
 #endif
 
-    i = bdigit_roomof(SIZEOF_LONG_LONG);
-    while (i-- && !digits[i]) ;
-    BIGNUM_SET_LEN(big, i+1);
     return big;
 }
 
