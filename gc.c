@@ -1734,8 +1734,8 @@ RVALUE_OLD_UNCOLLECTIBLE_SET(rb_objspace_t *objspace, VALUE obj)
     RVALUE_PAGE_OLD_UNCOLLECTIBLE_SET(objspace, GET_HEAP_PAGE(obj), obj);
 }
 
-static inline VALUE
-RVALUE_FLAGS_AGE_SET(VALUE flags, int age)
+static inline flags_t
+RVALUE_FLAGS_AGE_SET(flags_t flags, int age)
 {
     flags &= ~(FL_PROMOTED0 | FL_PROMOTED1);
     flags |= (age << RVALUE_AGE_SHIFT);
@@ -1746,7 +1746,7 @@ RVALUE_FLAGS_AGE_SET(VALUE flags, int age)
 static inline void
 RVALUE_AGE_INC(rb_objspace_t *objspace, VALUE obj)
 {
-    VALUE flags = RBASIC(obj)->flags;
+    flags_t flags = RBASIC(obj)->flags;
     int age = RVALUE_FLAGS_AGE(flags);
 
     if (RGENGC_CHECK_MODE && age == RVALUE_OLD_AGE) {
