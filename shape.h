@@ -66,7 +66,7 @@ static inline shape_id_t
 RBASIC_SHAPE_ID(VALUE obj)
 {
     RUBY_ASSERT(!RB_SPECIAL_CONST_P(obj));
-    return (shape_id_t)(SHAPE_MASK & ((RBASIC(obj)->flags) >> SHAPE_FLAG_SHIFT));
+    return RBASIC(obj)->shape_id;
 }
 
 static inline void
@@ -74,8 +74,7 @@ RBASIC_SET_SHAPE_ID(VALUE obj, shape_id_t shape_id)
 {
     // Ractors are occupying the upper 32 bits of flags, but only in debug mode
     // Object shapes are occupying top bits
-    RBASIC(obj)->flags &= SHAPE_FLAG_MASK;
-    RBASIC(obj)->flags |= ((VALUE)(shape_id) << SHAPE_FLAG_SHIFT);
+    RBASIC(obj)->shape_id = shape_id;
 }
 
 static inline shape_id_t
@@ -216,7 +215,6 @@ rb_shape_t *rb_shape_traverse_from_new_root(rb_shape_t *initial_shape, rb_shape_
 bool rb_shape_set_shape_id(VALUE obj, shape_id_t shape_id);
 
 VALUE rb_obj_debug_shape(VALUE self, VALUE obj);
-VALUE rb_shape_flags_mask(void);
 void rb_shape_set_too_complex(VALUE obj);
 
 // For ext/objspace

@@ -55,6 +55,9 @@ enum ruby_rvalue_flags {
     RVALUE_EMBED_LEN_MAX = RBIMPL_RVALUE_EMBED_LEN_MAX
 };
 
+
+typedef uint32_t flags_t;
+
 /**
  * Ruby's object's,  base components.  Every  single ruby objects have  them in
  * common.
@@ -62,6 +65,9 @@ enum ruby_rvalue_flags {
 struct
 RUBY_ALIGNAS(SIZEOF_VALUE)
 RBasic {
+#if (SIZEOF_UINT64_T == SIZEOF_VALUE)
+    uint32_t shape_id;
+#endif
 
     /**
      * Per-object  flags.  Each  ruby  objects have  their own  characteristics
@@ -74,7 +80,7 @@ RBasic {
      * @note  This is ::VALUE rather than  an enum for alignment purpose.  Back
      *        in the 1990s there were no such thing like `_Alignas` in C.
      */
-    VALUE flags;
+    flags_t flags;
 
     /**
      * Class of an object.  Every object has its class.  Also, everything is an

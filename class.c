@@ -193,7 +193,7 @@ rb_class_detach_module_subclasses(VALUE klass)
  * \note this function is not Class#allocate.
  */
 static VALUE
-class_alloc(VALUE flags, VALUE klass)
+class_alloc(flags_t flags, VALUE klass)
 {
     size_t alloc_size = sizeof(struct RClass);
 

@@ -104,6 +104,8 @@ rb_shape_get_shape_id(VALUE obj)
       case T_CLASS:
       case T_MODULE:
         return RCLASS_SHAPE_ID(obj);
+      case T_IMEMO:
+          rb_bug("should you really be doing this?");
       default:
         return rb_generic_shape_id(obj);
     }

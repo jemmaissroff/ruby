@@ -99,7 +99,7 @@ rb_obj_reveal(VALUE obj, VALUE klass)
 }
 
 VALUE
-rb_obj_setup(VALUE obj, VALUE klass, VALUE type)
+rb_obj_setup(VALUE obj, VALUE klass, flags_t type)
 {
     RBASIC(obj)->flags = type;
     RBASIC_SET_CLASS(obj, klass);

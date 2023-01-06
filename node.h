@@ -154,7 +154,10 @@ typedef struct rb_ast_id_table {
 } rb_ast_id_table_t;
 
 typedef struct RNode {
-    VALUE flags;
+#if (SIZEOF_UINT64_T == SIZEOF_VALUE)
+    uint32_t shape_id;
+#endif
+    flags_t flags;
     union {
         struct RNode *node;
         ID id;
@@ -202,7 +205,7 @@ typedef struct RNode {
 #define NODE_LMASK  (((SIGNED_VALUE)1<<(sizeof(VALUE)*CHAR_BIT-NODE_LSHIFT))-1)
 #define nd_line(n) (int)(((SIGNED_VALUE)(n)->flags)>>NODE_LSHIFT)
 #define nd_set_line(n,l) \
-    (n)->flags=(((n)->flags&~((VALUE)(-1)<<NODE_LSHIFT))|((VALUE)((l)&NODE_LMASK)<<NODE_LSHIFT))
+    (n)->flags=(((n)->flags&~((flags_t)(-1)<<NODE_LSHIFT))|((flags_t)((l)&NODE_LMASK)<<NODE_LSHIFT))
 
 #define nd_first_column(n) ((int)((n)->nd_loc.beg_pos.column))
 #define nd_set_first_column(n, v) ((n)->nd_loc.beg_pos.column = (v))

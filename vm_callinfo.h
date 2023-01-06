@@ -60,7 +60,10 @@ rb_callinfo_kwarg_bytes(int keyword_len)
 
 // imemo_callinfo
 struct rb_callinfo {
-    VALUE flags;
+#if (SIZEOF_UINT64_T == SIZEOF_VALUE)
+    uint32_t shape_id;
+#endif
+    flags_t flags;
     const struct rb_callinfo_kwarg *kwarg;
     VALUE mid;
     VALUE flag;
@@ -273,7 +276,11 @@ typedef VALUE (*vm_call_handler)(
 // imemo_callcache
 
 struct rb_callcache {
-    const VALUE flags;
+#if (SIZEOF_UINT64_T == SIZEOF_VALUE)
+    const uint32_t shape_id;
+#endif
+
+    const flags_t flags;
 
     /* inline cache: key */
     const VALUE klass; // should not mark it because klass can not be free'd

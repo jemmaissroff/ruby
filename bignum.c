@@ -2975,7 +2975,7 @@ rb_cmpint(VALUE val, VALUE a, VALUE b)
     (BIGNUM_EMBED_P(b) ? \
      (void)(RBASIC(b)->flags = \
             (RBASIC(b)->flags & ~BIGNUM_EMBED_LEN_MASK) | \
-            ((l) << BIGNUM_EMBED_LEN_SHIFT)) : \
+            ((flags_t)(l) << BIGNUM_EMBED_LEN_SHIFT)) : \
      (void)(RBIGNUM(b)->as.heap.len = (l)))
 
 static void

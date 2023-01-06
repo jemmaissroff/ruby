@@ -80,7 +80,7 @@ VALUE rb_newobj(void);
  * @exception  rb_eNoMemError  No space left.
  * @return     An allocated object, filled with the arguments.
  */
-VALUE rb_newobj_of(VALUE klass, VALUE flags);
+VALUE rb_newobj_of(VALUE klass, flags_t flags);
 
 /**
  * Fills common fields in the object.
@@ -103,7 +103,7 @@ VALUE rb_newobj_of(VALUE klass, VALUE flags);
  * They normally only concern ::RUBY_T_DATA.   This argument is mainly used for
  * specifying flags, @shyouhei suspects.
  */
-VALUE rb_obj_setup(VALUE obj, VALUE klass, VALUE type);
+VALUE rb_obj_setup(VALUE obj, VALUE klass, flags_t type);
 
 /**
  * Queries  the  class  of  an  object.    This  is  not  always  identical  to

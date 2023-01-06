@@ -524,7 +524,11 @@ struct rb_iseq_constant_body {
 /* T_IMEMO/iseq */
 /* typedef rb_iseq_t is in method.h */
 struct rb_iseq_struct {
-    VALUE flags; /* 1 */
+#if (SIZEOF_UINT64_T == SIZEOF_VALUE)
+    uint32_t shape_id;
+#endif
+
+    flags_t flags; /* 1 */
     VALUE wrapper; /* 2 */
 
     struct rb_iseq_constant_body *body;  /* 3 */

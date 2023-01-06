@@ -532,6 +532,7 @@ setup_fake_str(struct RString *fake_str, const char *name, long len, int encidx)
 VALUE
 rb_setup_fake_str(struct RString *fake_str, const char *name, long len, rb_encoding *enc)
 {
+    memset(fake_str, 0, sizeof(struct RString));
     return setup_fake_str(fake_str, name, len, rb_enc_to_index(enc));
 }
 
