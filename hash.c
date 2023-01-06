@@ -1439,7 +1439,7 @@ hash_iter_lev_inc(VALUE hash)
     }
     else {
         lev += 1;
-        RBASIC(hash)->flags = ((RBASIC(hash)->flags & ~RHASH_LEV_MASK) | ((VALUE)lev << RHASH_LEV_SHIFT));
+        RBASIC(hash)->flags = ((RBASIC(hash)->flags & ~RHASH_LEV_MASK) | ((flags_t)lev << RHASH_LEV_SHIFT));
         if (lev == RHASH_LEV_MAX) {
             iter_lev_in_ivar_set(hash, lev);
         }
@@ -1537,7 +1537,7 @@ rb_hash_foreach(VALUE hash, rb_foreach_func *func, VALUE farg)
 }
 
 static VALUE
-hash_alloc_flags(VALUE klass, VALUE flags, VALUE ifnone)
+hash_alloc_flags(VALUE klass, flags_t flags, VALUE ifnone)
 {
     const VALUE wb = (RGENGC_WB_PROTECTED_HASH ? FL_WB_PROTECTED : 0);
     NEWOBJ_OF(hash, struct RHash, klass, T_HASH | wb | flags);
@@ -1617,7 +1617,7 @@ hash_dup_with_compare_by_id(VALUE hash)
 }
 
 static VALUE
-hash_dup(VALUE hash, VALUE klass, VALUE flags)
+hash_dup(VALUE hash, VALUE klass, flags_t flags)
 {
     return hash_copy(hash_alloc_flags(klass, flags, RHASH_IFNONE(hash)),
                      hash);
