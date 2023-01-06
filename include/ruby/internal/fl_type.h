@@ -497,8 +497,8 @@ RBIMPL_ATTR_ARTIFICIAL()
  * @pre        The object must not be an enum ::ruby_special_consts.
  * @return     `obj`'s flags, masked by `flags`.
  */
-static inline VALUE
-RB_FL_TEST_RAW(VALUE obj, VALUE flags)
+static inline flags_t
+RB_FL_TEST_RAW(VALUE obj, flags_t flags)
 {
     RBIMPL_ASSERT_OR_ASSUME(RB_FL_ABLE(obj));
     return RBASIC(obj)->flags & flags;
@@ -524,7 +524,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  *             return value could be passed to RB_FL_STE() etc.
  */
 static inline VALUE
-RB_FL_TEST(VALUE obj, VALUE flags)
+RB_FL_TEST(VALUE obj, flags_t flags)
 {
     if (RB_FL_ABLE(obj)) {
         return RB_FL_TEST_RAW(obj, flags);
@@ -547,7 +547,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * @pre        The object must not be an enum ::ruby_special_consts.
  */
 static inline bool
-RB_FL_ANY_RAW(VALUE obj, VALUE flags)
+RB_FL_ANY_RAW(VALUE obj, flags_t flags)
 {
     return RB_FL_TEST_RAW(obj, flags);
 }
@@ -563,7 +563,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * @retval     false  No it doesn't at all.
  */
 static inline bool
-RB_FL_ANY(VALUE obj, VALUE flags)
+RB_FL_ANY(VALUE obj, flags_t flags)
 {
     return RB_FL_TEST(obj, flags);
 }
@@ -581,7 +581,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * @pre        The object must not be an enum ::ruby_special_consts.
  */
 static inline bool
-RB_FL_ALL_RAW(VALUE obj, VALUE flags)
+RB_FL_ALL_RAW(VALUE obj, flags_t flags)
 {
     return RB_FL_TEST_RAW(obj, flags) == flags;
 }
@@ -597,7 +597,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * @retval     false  The object lacks any of the flags.
  */
 static inline bool
-RB_FL_ALL(VALUE obj, VALUE flags)
+RB_FL_ALL(VALUE obj, flags_t flags)
 {
     return RB_FL_TEST(obj, flags) == flags;
 }
@@ -620,7 +620,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * `__declspec(noalias)`.
  */
 static inline void
-rbimpl_fl_set_raw_raw(struct RBasic *obj, VALUE flags)
+rbimpl_fl_set_raw_raw(struct RBasic *obj, flags_t flags)
 {
     obj->flags |= flags;
 }
@@ -635,7 +635,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * @post        `obj` has `flags` set.
  */
 static inline void
-RB_FL_SET_RAW(VALUE obj, VALUE flags)
+RB_FL_SET_RAW(VALUE obj, flags_t flags)
 {
     RBIMPL_ASSERT_OR_ASSUME(RB_FL_ABLE(obj));
     rbimpl_fl_set_raw_raw(RBASIC(obj), flags);
@@ -655,7 +655,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * @post        `obj` has `flags` set.
  */
 static inline void
-RB_FL_SET(VALUE obj, VALUE flags)
+RB_FL_SET(VALUE obj, flags_t flags)
 {
     if (RB_FL_ABLE(obj)) {
         RB_FL_SET_RAW(obj, flags);
@@ -680,7 +680,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * `__declspec(noalias)`.
  */
 static inline void
-rbimpl_fl_unset_raw_raw(struct RBasic *obj, VALUE flags)
+rbimpl_fl_unset_raw_raw(struct RBasic *obj, flags_t flags)
 {
     obj->flags &= ~flags;
 }
@@ -695,7 +695,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * @post        `obj` has `flags` cleared.
  */
 static inline void
-RB_FL_UNSET_RAW(VALUE obj, VALUE flags)
+RB_FL_UNSET_RAW(VALUE obj, flags_t flags)
 {
     RBIMPL_ASSERT_OR_ASSUME(RB_FL_ABLE(obj));
     rbimpl_fl_unset_raw_raw(RBASIC(obj), flags);
@@ -710,7 +710,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * @post        `obj` has `flags` cleard.
  */
 static inline void
-RB_FL_UNSET(VALUE obj, VALUE flags)
+RB_FL_UNSET(VALUE obj, flags_t flags)
 {
     if (RB_FL_ABLE(obj)) {
         RB_FL_UNSET_RAW(obj, flags);
@@ -735,7 +735,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * `__declspec(noalias)`.
  */
 static inline void
-rbimpl_fl_reverse_raw_raw(struct RBasic *obj, VALUE flags)
+rbimpl_fl_reverse_raw_raw(struct RBasic *obj, flags_t flags)
 {
     obj->flags ^= flags;
 }
@@ -750,7 +750,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * @post        `obj` has `flags` cleared.
  */
 static inline void
-RB_FL_REVERSE_RAW(VALUE obj, VALUE flags)
+RB_FL_REVERSE_RAW(VALUE obj, flags_t flags)
 {
     RBIMPL_ASSERT_OR_ASSUME(RB_FL_ABLE(obj));
     rbimpl_fl_reverse_raw_raw(RBASIC(obj), flags);
@@ -766,7 +766,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * @post        `obj` has `flags` reversed.
  */
 static inline void
-RB_FL_REVERSE(VALUE obj, VALUE flags)
+RB_FL_REVERSE(VALUE obj, flags_t flags)
 {
     if (RB_FL_ABLE(obj)) {
         RB_FL_REVERSE_RAW(obj, flags);
@@ -902,7 +902,7 @@ RBIMPL_ATTR_ARTIFICIAL()
  * (namely `class.c:singleton_class_of()`) where return  value of this function
  * is passed to RB_FL_SET_RAW().
  */
-static inline VALUE
+static inline flags_t
 RB_OBJ_FROZEN_RAW(VALUE obj)
 {
     return RB_FL_TEST_RAW(obj, RUBY_FL_FREEZE);
