@@ -2962,18 +2962,21 @@ rb_obj_traverse_replace(VALUE obj,
 }
 
 struct RVALUE {
-    VALUE flags;
+#if (SIZEOF_UINT64_T == SIZEOF_VALUE)
+    uint32_t shape_id;
+#endif
+    flags_t flags;
     VALUE klass;
     VALUE v1;
     VALUE v2;
     VALUE v3;
 };
 
-static const VALUE fl_users = FL_USER1  | FL_USER2  | FL_USER3  |
-                              FL_USER4  | FL_USER5  | FL_USER6  | FL_USER7  |
-                              FL_USER8  | FL_USER9  | FL_USER10 | FL_USER11 |
-                              FL_USER12 | FL_USER13 | FL_USER14 | FL_USER15 |
-                              FL_USER16 | FL_USER17 | FL_USER18 | FL_USER19;
+static const flags_t fl_users = FL_USER1  | FL_USER2  | FL_USER3  |
+                                FL_USER4  | FL_USER5  | FL_USER6  | FL_USER7  |
+                                FL_USER8  | FL_USER9  | FL_USER10 | FL_USER11 |
+                                FL_USER12 | FL_USER13 | FL_USER14 | FL_USER15 |
+                                FL_USER16 | FL_USER17 | FL_USER18 | FL_USER19;
 
 static void
 ractor_moved_bang(VALUE obj)

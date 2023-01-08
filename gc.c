@@ -1505,7 +1505,7 @@ static void rgengc_mark_and_rememberset_clear(rb_objspace_t *objspace, rb_heap_t
 static void rgengc_rememberset_mark(rb_objspace_t *objspace, rb_heap_t *heap);
 
 static inline int
-RVALUE_FLAGS_AGE(VALUE flags)
+RVALUE_FLAGS_AGE(flags_t flags)
 {
     return (int)((flags & (FL_PROMOTED0 | FL_PROMOTED1)) >> RVALUE_AGE_SHIFT);
 }

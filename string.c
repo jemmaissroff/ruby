@@ -1752,7 +1752,7 @@ str_duplicate_setup(VALUE klass, VALUE str, VALUE dup)
         ENC_CODERANGE_MASK | ENCODING_MASK |
         FL_FREEZE
         ;
-    VALUE flags = FL_TEST_RAW(str, flag_mask);
+    flags_t flags = FL_TEST_RAW(str, flag_mask);
     int encidx = 0;
     if (STR_EMBED_P(str)) {
         long len = RSTRING_EMBED_LEN(str);

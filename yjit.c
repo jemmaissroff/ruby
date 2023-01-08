@@ -853,15 +853,15 @@ rb_yjit_dump_iseq_loc(const rb_iseq_t *iseq, uint32_t insn_idx)
 }
 
 // The FL_TEST() macro
-VALUE
-rb_FL_TEST(VALUE obj, VALUE flags)
+flags_t
+rb_FL_TEST(VALUE obj, flags_t flags)
 {
     return RB_FL_TEST(obj, flags);
 }
 
 // The FL_TEST_RAW() macro, normally an internal implementation detail
-VALUE
-rb_FL_TEST_RAW(VALUE obj, VALUE flags)
+flags_t
+rb_FL_TEST_RAW(VALUE obj, flags_t flags)
 {
     return FL_TEST_RAW(obj, flags);
 }

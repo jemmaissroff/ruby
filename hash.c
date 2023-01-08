@@ -1626,7 +1626,7 @@ hash_dup(VALUE hash, VALUE klass, flags_t flags)
 VALUE
 rb_hash_dup(VALUE hash)
 {
-    const VALUE flags = RBASIC(hash)->flags;
+    const flags_t flags = RBASIC(hash)->flags;
     VALUE ret = hash_dup(hash, rb_obj_class(hash),
                          flags & (FL_EXIVAR|RHASH_PROC_DEFAULT));
     if (flags & FL_EXIVAR)
@@ -3572,7 +3572,7 @@ rb_hash_to_h(VALUE hash)
         return rb_hash_to_h_block(hash);
     }
     if (rb_obj_class(hash) != rb_cHash) {
-        const VALUE flags = RBASIC(hash)->flags;
+        const flags_t flags = RBASIC(hash)->flags;
         hash = hash_dup(hash, rb_cHash, flags & RHASH_PROC_DEFAULT);
     }
     return hash;

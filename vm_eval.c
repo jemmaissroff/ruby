@@ -771,7 +771,7 @@ rb_type_str(enum ruby_value_type type)
 static void
 uncallable_object(VALUE recv, ID mid)
 {
-    VALUE flags;
+    flags_t flags;
     int type;
     const char *typestr;
     VALUE mname = rb_id2str(mid);
@@ -789,19 +789,19 @@ uncallable_object(VALUE recv, ID mid)
     else if (!(typestr = rb_type_str(type = BUILTIN_TYPE(recv)))) {
         rb_raise(rb_eNotImpError,
                  "method `%"PRIsVALUE"' called on broken T_?""?""?(0x%02x) object"
-                 " (%p flags=0x%"PRIxVALUE")",
+                 " (%p flags=0x%d)",
                  mname, type, (void *)recv, flags);
     }
     else if (T_OBJECT <= type && type < T_NIL) {
         rb_raise(rb_eNotImpError,
                  "method `%"PRIsVALUE"' called on hidden %s object"
-                 " (%p flags=0x%"PRIxVALUE")",
+                 " (%p flags=0x%d)",
                  mname, typestr, (void *)recv, flags);
     }
     else {
         rb_raise(rb_eNotImpError,
                  "method `%"PRIsVALUE"' called on unexpected %s object"
-                 " (%p flags=0x%"PRIxVALUE")",
+                 " (%p flags=0x%d)",
                  mname, typestr, (void *)recv, flags);
     }
 }
