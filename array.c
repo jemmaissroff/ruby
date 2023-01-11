@@ -1362,7 +1362,9 @@ ary_make_partial(VALUE ary, VALUE klass, long offset, long len)
 
         ARY_SET_PTR(result, RARRAY_CONST_PTR_TRANSIENT(ary));
         ARY_SET_LEN(result, RARRAY_LEN(ary));
+
         rb_ary_set_shared(result, shared);
+        ARY_EMBED_P(result);
 
         ARY_INCREASE_PTR(result, offset);
         ARY_SET_LEN(result, len);

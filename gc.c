@@ -2504,6 +2504,7 @@ newobj_init(VALUE klass, flags_t flags, int wb_protected, rb_objspace_t *objspac
 #endif
     RVALUE *p = RANY(obj);
     p->as.basic.flags = flags;
+    p->as.basic.shape_id = 0;
     *((VALUE *)&p->as.basic.klass) = klass;
 
 #if RACTOR_CHECK_MODE
