@@ -1127,6 +1127,7 @@ extern "C" {
         new_capacity: u32,
     ) -> *mut rb_shape_t;
     pub fn rb_shape_get_next(shape: *mut rb_shape_t, obj: VALUE, id: ID) -> *mut rb_shape_t;
+    pub fn rb_shape_get_next_ivar_shape_maybe(shape: *mut rb_shape_t, id: ID) -> *mut rb_shape_t;
     pub fn rb_shape_id(shape: *mut rb_shape_t) -> shape_id_t;
     pub fn rb_ary_tmp_new_from_values(
         arg1: VALUE,

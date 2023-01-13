@@ -194,6 +194,13 @@ get_next_shape_internal(rb_shape_t * shape, ID id, enum shape_type shape_type, b
     return res;
 }
 
+rb_shape_t *
+rb_shape_get_next_ivar_shape_maybe(rb_shape_t * shape, ID id)
+{
+    bool variation_created = false;
+    return get_next_shape_internal(shape, id, SHAPE_IVAR, &variation_created, false);
+}
+
 MJIT_FUNC_EXPORTED int
 rb_shape_frozen_shape_p(rb_shape_t* shape)
 {

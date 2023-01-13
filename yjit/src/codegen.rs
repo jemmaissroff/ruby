@@ -2269,49 +2269,12 @@ fn gen_write_iv(
     }
 }
 
-fn gen_setinstancevariable(
+fn gen_call_rb_vm_setinstancevariable(
     jit: &mut JITState,
     ctx: &mut Context,
     asm: &mut Assembler,
-    ocb: &mut OutlinedCb,
-) -> CodegenStatus {
-    let starting_context = ctx.clone(); // make a copy for use with jit_chain_guard
-
-    // Defer compilation so we can specialize on a runtime `self`
-    if !jit_at_current_insn(jit) {
-        defer_compilation(jit, ctx, asm, ocb);
-        return EndBlock;
-    }
-
-    let ivar_name = jit_get_arg(jit, 0).as_u64();
-    let comptime_receiver = jit_peek_at_self(jit);
-    let comptime_val_klass = comptime_receiver.class_of();
-
-    // If the comptime receiver is frozen, writing an IV will raise an exception
-    // and we don't want to JIT code to deal with that situation.
-    // If the object has a too complex shape, we will also exit
-    if comptime_receiver.is_frozen() || comptime_receiver.shape_too_complex() {
-        return CantCompile;
-    }
-
-    let (_, stack_type) = ctx.get_opnd_mapping(StackOpnd(0));
-
-    // Check if the comptime class uses a custom allocator
-    let custom_allocator = unsafe { rb_get_alloc_func(comptime_val_klass) };
-    let uses_custom_allocator = match custom_allocator {
-        Some(alloc_fun) => {
-            let allocate_instance = rb_class_allocate_instance as *const u8;
-            alloc_fun as *const u8 != allocate_instance
-        }
-        None => false,
-    };
-
-    // Check if the comptime receiver is a T_OBJECT
-    let receiver_t_object = unsafe { RB_TYPE_P(comptime_receiver, RUBY_T_OBJECT) };
-
-    // If the receiver isn't a T_OBJECT, or uses a custom allocator,
-    // then just write out the IV write as a function call
-    if !receiver_t_object || uses_custom_allocator {
+    ivar_name: ID,
+    ) {
         asm.comment("call rb_vm_setinstancevariable()");
 
         let ic = jit_get_arg(jit, 1).as_u64(); // type IVC
@@ -2334,10 +2297,19 @@ fn gen_setinstancevariable(
                 Opnd::const_ptr(ic as *const u8),
             ]
         );
-    } else {
+}
+
+fn gen_set_ivar_for_object(
+    jit: &mut JITState,
+    ctx: &mut Context,
+    asm: &mut Assembler,
+    ocb: &mut OutlinedCb,
+    starting_context: &Context,
+    ivar_name: ID,
+    shape_id: u32,
+    ) {
         // Get the iv index
         let ivar_index = unsafe {
-            let shape_id = comptime_receiver.shape_id_of();
             let shape = rb_shape_get_shape_by_id(shape_id);
             let mut ivar_index: u32 = 0;
             if rb_shape_get_iv_index(shape, ivar_name, &mut ivar_index) {
@@ -2362,17 +2334,16 @@ fn gen_setinstancevariable(
             guard_object_is_heap(asm, recv, side_exit);
         }
 
-        let expected_shape = unsafe { rb_shape_get_shape_id(comptime_receiver) };
         let shape_id_offset = unsafe { rb_shape_id_offset() };
         let shape_opnd = Opnd::mem(SHAPE_ID_NUM_BITS as u8, recv, shape_id_offset);
 
         asm.comment("guard shape");
-        asm.cmp(shape_opnd, Opnd::UImm(expected_shape as u64));
+        asm.cmp(shape_opnd, Opnd::UImm(shape_id as u64));
         let megamorphic_side_exit = counted_exit!(ocb, side_exit, setivar_megamorphic).into();
         jit_chain_guard(
             JCC_JNE,
             jit,
-            &starting_context,
+            starting_context,
             asm,
             ocb,
             SET_IVAR_MAX_DEPTH,
@@ -2385,7 +2356,7 @@ fn gen_setinstancevariable(
             // If we don't have an instance variable index, then we need to
             // transition out of the current shape.
             None => {
-                let shape = comptime_receiver.shape_of();
+                let shape = unsafe { rb_shape_get_shape_by_id(shape_id) };
 
                 let current_capacity = unsafe { (*shape).capacity };
                 let new_capacity = current_capacity * 2;
@@ -2407,9 +2378,23 @@ fn gen_setinstancevariable(
                 };
 
                 let dest_shape = if capa_shape.is_none() {
-                    unsafe { rb_shape_get_next(shape, comptime_receiver, ivar_name) }
+                    unsafe {
+                        let shape = rb_shape_get_next_ivar_shape_maybe(shape, ivar_name);
+                        if shape.is_null() {
+                            return CantCompile;
+                        } else {
+                            shape
+                        }
+                    };
                 } else {
-                    unsafe { rb_shape_get_next(capa_shape.unwrap(), comptime_receiver, ivar_name) }
+                    unsafe {
+                        let shape = rb_shape_get_next_ivar_shape_maybe(capa_shape.unwrap(), ivar_name);
+                        if shape.is_null() {
+                            return CantCompile;
+                        } else {
+                            shape
+                        }
+                    };
                 };
 
                 let new_shape_id = unsafe { rb_shape_id(dest_shape) };
@@ -2479,6 +2464,54 @@ fn gen_setinstancevariable(
 
             asm.write_label(skip_wb);
         }
+}
+
+fn gen_setinstancevariable(
+    jit: &mut JITState,
+    ctx: &mut Context,
+    asm: &mut Assembler,
+    ocb: &mut OutlinedCb,
+) -> CodegenStatus {
+    let starting_context = ctx.clone(); // make a copy for use with jit_chain_guard
+
+    // Defer compilation so we can specialize on a runtime `self`
+    if !jit_at_current_insn(jit) {
+        defer_compilation(jit, ctx, asm, ocb);
+        return EndBlock;
+    }
+
+    let ivar_name = jit_get_arg(jit, 0).as_u64();
+    let comptime_receiver = jit_peek_at_self(jit);
+    let comptime_val_klass = comptime_receiver.class_of();
+
+    // If the comptime receiver is frozen, writing an IV will raise an exception
+    // and we don't want to JIT code to deal with that situation.
+    // If the object has a too complex shape, we will also exit
+    if comptime_receiver.is_frozen() || comptime_receiver.shape_too_complex() {
+        return CantCompile;
+    }
+
+    let (_, stack_type) = ctx.get_opnd_mapping(StackOpnd(0));
+
+    // Check if the comptime class uses a custom allocator
+    let custom_allocator = unsafe { rb_get_alloc_func(comptime_val_klass) };
+    let uses_custom_allocator = match custom_allocator {
+        Some(alloc_fun) => {
+            let allocate_instance = rb_class_allocate_instance as *const u8;
+            alloc_fun as *const u8 != allocate_instance
+        }
+        None => false,
+    };
+
+    // Check if the comptime receiver is a T_OBJECT
+    let receiver_t_object = unsafe { RB_TYPE_P(comptime_receiver, RUBY_T_OBJECT) };
+
+    // If the receiver isn't a T_OBJECT, or uses a custom allocator,
+    // then just write out the IV write as a function call
+    if !receiver_t_object || uses_custom_allocator {
+        gen_call_rb_vm_setinstancevariable(jit, ctx, asm, ivar_name);
+    } else {
+        gen_set_ivar_for_object
     }
 
     KeepCompiling

@@ -150,6 +150,7 @@ void rb_shape_transition_shape_frozen(VALUE obj);
 void rb_shape_transition_shape_remove_ivar(VALUE obj, ID id, rb_shape_t *shape, VALUE * removed);
 rb_shape_t * rb_shape_transition_shape_capa(rb_shape_t * shape, uint32_t new_capacity);
 rb_shape_t* rb_shape_get_next(rb_shape_t* shape, VALUE obj, ID id);
+rb_shape_t * rb_shape_get_next_ivar_shape_maybe(rb_shape_t * shape, ID id);
 
 rb_shape_t * rb_shape_rebuild_shape(rb_shape_t * initial_shape, rb_shape_t * dest_shape);
 
