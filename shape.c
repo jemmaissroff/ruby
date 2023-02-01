@@ -435,10 +435,15 @@ rb_shape_get_iv_index(rb_shape_t * shape, ID id, attr_index_t *value)
             }
         }
         else if (shape_type == SHAPE_IV_INDEX_HASH) {
-            if (rb_id_table_lookup(shape->iv_indexes, id, (VALUE *)value)) {
+            VALUE index;
+            if (rb_id_table_lookup(shape->iv_indexes, id, (VALUE *)&index)) {
+                *value = (attr_index_t)index;
                 return true;
             }
             else {
+                if (shape->previous_iv_index_hash_shape_id == ROOT_SHAPE_ID) {
+                    return false;
+                }
                 return rb_shape_get_iv_index(rb_shape_get_shape_by_id(shape->previous_iv_index_hash_shape_id), id, value);
             }
         }
