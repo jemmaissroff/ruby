@@ -771,6 +771,9 @@ shape_i(rb_shape_t *shape, void *data)
       case SHAPE_OBJ_TOO_COMPLEX:
         dump_append(dc, "\"OBJ_TOO_COMPLEX\"");
         break;
+      case SHAPE_IV_INDEX_HASH:
+        dump_append(dc, "\"IV_INDEX_HASH\"");
+        break;
       default:
         rb_bug("[objspace] unexpected shape type");
     }
