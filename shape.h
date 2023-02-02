@@ -42,15 +42,21 @@ typedef uint16_t shape_id_t;
 # define SHAPE_SIZE_OF_IV_INDEX_HASH_TABLE 50
 
 struct rb_shape {
-    struct rb_id_table * edges; // id_table from ID (ivar) to next shape
-    ID edge_name; // ID (ivar) for transition from parent to rb_shape
-    attr_index_t next_iv_index;
-    uint32_t capacity; // Total capacity of the object with this shape
+    union {
+        struct {
+            ID edge_name; // ID (ivar) for transition from parent to rb_shape
+            uint32_t capacity; // Total capacity of the object with this shape
+            attr_index_t next_iv_index;
+        } shape_with_properties;
+        struct {
+            struct rb_id_table * iv_indexes;
+            shape_id_t previous_iv_index_hash_shape_id;
+        } iv_index_hash_shape;
+    } as;
+    shape_id_t parent_id;
     uint8_t type;
     uint8_t size_pool_index;
-    shape_id_t parent_id;
-    shape_id_t previous_iv_index_hash_shape_id;
-    struct rb_id_table * iv_indexes;
+    struct rb_id_table * edges; // id_table from ID (ivar) to next shape
 };
 
 typedef struct rb_shape rb_shape_t;
@@ -138,6 +144,11 @@ int32_t rb_shape_id_offset(void);
 
 rb_shape_t* rb_shape_get_shape_by_id_without_assertion(shape_id_t shape_id);
 rb_shape_t * rb_shape_get_parent(rb_shape_t * shape);
+RUBY_SYMBOL_EXPORT_BEGIN
+attr_index_t rb_shape_next_iv_index(rb_shape_t * shape);
+uint32_t rb_shape_capacity(rb_shape_t * shape);
+ID rb_shape_edge_name(rb_shape_t * shape);
+RUBY_SYMBOL_EXPORT_END
 
 MJIT_SYMBOL_EXPORT_BEGIN
 rb_shape_t* rb_shape_get_shape_by_id(shape_id_t shape_id);
@@ -164,7 +175,7 @@ ROBJECT_IV_CAPACITY(VALUE obj)
     // Asking for capacity doesn't make sense when the object is using
     // a hash table for storing instance variables
     RUBY_ASSERT(ROBJECT_SHAPE_ID(obj) != OBJ_TOO_COMPLEX_SHAPE_ID);
-    return rb_shape_get_shape_by_id(ROBJECT_SHAPE_ID(obj))->capacity;
+    return rb_shape_capacity(rb_shape_get_shape_by_id(ROBJECT_SHAPE_ID(obj)));
 }
 
 static inline struct rb_id_table *
@@ -194,21 +205,21 @@ ROBJECT_IV_COUNT(VALUE obj)
     else {
         RBIMPL_ASSERT_TYPE(obj, RUBY_T_OBJECT);
         RUBY_ASSERT(ROBJECT_SHAPE_ID(obj) != OBJ_TOO_COMPLEX_SHAPE_ID);
-        return rb_shape_get_shape_by_id(ROBJECT_SHAPE_ID(obj))->next_iv_index;
+        return rb_shape_next_iv_index(rb_shape_get_shape_by_id(ROBJECT_SHAPE_ID(obj)));
     }
 }
 
 static inline uint32_t
 RBASIC_IV_COUNT(VALUE obj)
 {
-    return rb_shape_get_shape_by_id(rb_shape_get_shape_id(obj))->next_iv_index;
+    return rb_shape_next_iv_index(rb_shape_get_shape_by_id(rb_shape_get_shape_id(obj)));
 }
 
 static inline uint32_t
 RCLASS_IV_COUNT(VALUE obj)
 {
     RUBY_ASSERT(RB_TYPE_P(obj, RUBY_T_CLASS) || RB_TYPE_P(obj, RUBY_T_MODULE));
-    uint32_t ivc = rb_shape_get_shape_by_id(RCLASS_SHAPE_ID(obj))->next_iv_index;
+    uint32_t ivc = rb_shape_next_iv_index(rb_shape_get_shape_by_id(RCLASS_SHAPE_ID(obj)));
     return ivc;
 }
 

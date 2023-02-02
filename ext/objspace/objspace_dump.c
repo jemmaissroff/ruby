@@ -749,7 +749,7 @@ shape_i(rb_shape_t *shape, void *data)
         dump_append(dc, "\"IVAR\"");
 
         dump_append(dc, ",\"edge_name\":");
-        dump_append_id(dc, shape->edge_name);
+        dump_append_id(dc, rb_shape_edge_name(shape));
 
         break;
       case SHAPE_FROZEN:
@@ -758,12 +758,12 @@ shape_i(rb_shape_t *shape, void *data)
       case SHAPE_CAPACITY_CHANGE:
         dump_append(dc, "\"CAPACITY_CHANGE\"");
         dump_append(dc, ", \"capacity\":");
-        dump_append_sizet(dc, shape->capacity);
+        dump_append_sizet(dc, rb_shape_capacity(shape));
         break;
       case SHAPE_INITIAL_CAPACITY:
         dump_append(dc, "\"INITIAL_CAPACITY\"");
         dump_append(dc, ", \"capacity\":");
-        dump_append_sizet(dc, shape->capacity);
+        dump_append_sizet(dc, rb_shape_capacity(shape));
         break;
       case SHAPE_T_OBJECT:
         dump_append(dc, "\"T_OBJECT\"");

@@ -310,9 +310,12 @@ rb_obj_copy_ivar(VALUE dest, VALUE obj)
         shape_to_set_on_dest = rb_shape_rebuild_shape(initial_shape, src_shape);
     }
 
-    RUBY_ASSERT(src_num_ivs <= shape_to_set_on_dest->capacity);
-    if (initial_shape->capacity < shape_to_set_on_dest->capacity) {
-        rb_ensure_iv_list_size(dest, initial_shape->capacity, shape_to_set_on_dest->capacity);
+
+    uint32_t initial_shape_capacity = rb_shape_capacity(initial_shape);
+    uint32_t shape_to_set_capacity = rb_shape_capacity(shape_to_set_on_dest);
+    RUBY_ASSERT(src_num_ivs <= shape_to_set_capacity);
+    if (initial_shape_capacity < shape_to_set_capacity) {
+        rb_ensure_iv_list_size(dest, initial_shape_capacity, shape_to_set_capacity);
         dest_buf = ROBJECT_IVPTR(dest);
     }
 

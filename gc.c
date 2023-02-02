@@ -7361,7 +7361,7 @@ gc_mark_children(rb_objspace_t *objspace, VALUE obj)
                 VALUE klass = RBASIC_CLASS(obj);
 
                 // Increment max_iv_count if applicable, used to determine size pool allocation
-                uint32_t num_of_ivs = shape->next_iv_index;
+                uint32_t num_of_ivs = rb_shape_next_iv_index(shape);
                 if (RCLASS_EXT(klass)->max_iv_count < num_of_ivs) {
                     RCLASS_EXT(klass)->max_iv_count = num_of_ivs;
                 }

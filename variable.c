@@ -1009,7 +1009,7 @@ generic_ivar_update(st_data_t *k, st_data_t *v, st_data_t u, int existing)
         }
     }
     FL_SET((VALUE)*k, FL_EXIVAR);
-    ivtbl = gen_ivtbl_resize(ivtbl, ivup->shape->next_iv_index);
+    ivtbl = gen_ivtbl_resize(ivtbl, rb_shape_next_iv_index(ivup->shape));
     // Reinsert in to the hash table because ivtbl might be a newly resized chunk of memory
     *v = (st_data_t)ivtbl;
     ivup->ivtbl = ivtbl;
@@ -1267,9 +1267,9 @@ generic_ivar_set(VALUE obj, ID id, VALUE val)
     rb_shape_t *shape = rb_shape_get_shape(obj);
     bool found = rb_shape_get_iv_index(shape, id, &index);
     if (!found) {
-        index = shape->next_iv_index;
+        index = rb_shape_next_iv_index(shape);
         shape = rb_shape_get_next(shape, obj, id);
-        RUBY_ASSERT(index == (shape->next_iv_index - 1));
+        RUBY_ASSERT(index == (rb_shape_next_iv_index(shape) - 1));
     }
 
     ivup.shape = shape;
@@ -1397,7 +1397,7 @@ rb_shape_t *
 rb_grow_iv_list(VALUE obj)
 {
     rb_shape_t * initial_shape = rb_shape_get_shape(obj);
-    uint32_t len = initial_shape->capacity;
+    uint32_t len = rb_shape_capacity(initial_shape);
     RUBY_ASSERT(len > 0);
     uint32_t newsize = (uint32_t)(len * 2);
 
@@ -1423,7 +1423,7 @@ rb_obj_ivar_set(VALUE obj, ID id, VALUE val)
     attr_index_t index;
 
     rb_shape_t *shape = rb_shape_get_shape(obj);
-    uint32_t num_iv = shape->capacity;
+    uint32_t num_iv = rb_shape_capacity(shape);
 
     if (rb_shape_obj_too_complex(obj)) {
         struct rb_id_table * table = ROBJECT_IV_HASH(obj);
@@ -1433,15 +1433,15 @@ rb_obj_ivar_set(VALUE obj, ID id, VALUE val)
     }
 
     if (!rb_shape_get_iv_index(shape, id, &index)) {
-        index = shape->next_iv_index;
+        index = rb_shape_next_iv_index(shape);
         if (index >= MAX_IVARS) {
             rb_raise(rb_eArgError, "too many instance variables");
         }
 
         RUBY_ASSERT(!rb_shape_obj_too_complex(obj));
 
-        if (UNLIKELY(shape->next_iv_index >= num_iv)) {
-            RUBY_ASSERT(shape->next_iv_index == num_iv);
+        if (UNLIKELY(rb_shape_next_iv_index(shape) >= num_iv)) {
+            RUBY_ASSERT(rb_shape_next_iv_index(shape) == num_iv);
 
             shape = rb_grow_iv_list(obj);
             RUBY_ASSERT(shape->type == SHAPE_CAPACITY_CHANGE);
@@ -1450,7 +1450,7 @@ rb_obj_ivar_set(VALUE obj, ID id, VALUE val)
         rb_shape_t *next_shape = rb_shape_get_next(shape, obj, id);
 
         if (next_shape->type == SHAPE_OBJ_TOO_COMPLEX) {
-            struct rb_id_table * table = rb_id_table_create(shape->next_iv_index);
+            struct rb_id_table * table = rb_id_table_create(rb_shape_next_iv_index(shape));
 
             // Evacuate all previous values from shape into id_table
             rb_ivar_foreach(obj, rb_obj_evacuate_ivs_to_hash_table, (st_data_t)table);
@@ -1476,7 +1476,7 @@ rb_obj_ivar_set(VALUE obj, ID id, VALUE val)
         else {
             rb_shape_set_shape(obj, next_shape);
             RUBY_ASSERT(next_shape->type == SHAPE_IVAR);
-            RUBY_ASSERT(index == (next_shape->next_iv_index - 1));
+            RUBY_ASSERT(index == (rb_shape_next_iv_index(next_shape) - 1));
         }
     }
 
@@ -1648,9 +1648,9 @@ iterate_over_shapes_with_callback(rb_shape_t *shape, rb_ivar_foreach_callback_fu
             iv_list = itr_data->ivtbl->ivptr;
             break;
         }
-        VALUE val = iv_list[shape->next_iv_index - 1];
+        VALUE val = iv_list[rb_shape_next_iv_index(shape) - 1];
         if (!UNDEF_P(val)) {
-            callback(shape->edge_name, val, itr_data->arg);
+            callback(rb_shape_edge_name(shape), val, itr_data->arg);
         }
         return;
       case SHAPE_INITIAL_CAPACITY:
@@ -1824,7 +1824,7 @@ rb_ivar_count(VALUE obj)
             return ROBJECT_IV_COUNT(obj);
         }
 
-        if (rb_shape_get_shape(obj)->next_iv_index > 0) {
+        if (rb_shape_next_iv_index(rb_shape_get_shape(obj)) > 0) {
             st_index_t i, count, num = ROBJECT_IV_COUNT(obj);
             const VALUE *const ivptr = ROBJECT_IVPTR(obj);
             for (i = count = 0; i < num; ++i) {
@@ -1837,12 +1837,12 @@ rb_ivar_count(VALUE obj)
         break;
       case T_CLASS:
       case T_MODULE:
-        if (rb_shape_get_shape(obj)->next_iv_index > 0) {
+        if (rb_shape_next_iv_index(rb_shape_get_shape(obj))> 0) {
             st_index_t count = 0;
 
             RB_VM_LOCK_ENTER();
             {
-                st_index_t i, num = rb_shape_get_shape(obj)->next_iv_index;
+                st_index_t i, num = rb_shape_next_iv_index(rb_shape_get_shape(obj));
                 const VALUE *const ivptr = RCLASS_IVPTR(obj);
                 for (i = count = 0; i < num; ++i) {
                     if (!UNDEF_P(ivptr[i])) {
@@ -3959,7 +3959,7 @@ rb_class_ivar_set(VALUE obj, ID key, VALUE value)
             // Creating and setting a new instance variable
 
             // Move to a shape which fits the new ivar
-            idx = shape->next_iv_index;
+            idx = rb_shape_next_iv_index(shape);
             shape = rb_shape_get_next(shape, obj, key);
 
             // We always allocate a power of two sized IV array. This way we
