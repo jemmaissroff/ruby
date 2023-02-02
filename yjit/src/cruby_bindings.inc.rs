@@ -288,15 +288,32 @@ pub type ruby_preserved_encindex = u32;
 pub type attr_index_t = u32;
 pub type shape_id_t = u32;
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct rb_shape {
-    pub edges: *mut rb_id_table,
-    pub edge_name: ID,
-    pub next_iv_index: attr_index_t,
-    pub capacity: u32,
+    pub as_: rb_shape__bindgen_ty_1,
+    pub parent_id: shape_id_t,
     pub type_: u8,
     pub size_pool_index: u8,
-    pub parent_id: shape_id_t,
+    pub edges: *mut rb_id_table,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union rb_shape__bindgen_ty_1 {
+    pub shape_with_properties: rb_shape__bindgen_ty_1__bindgen_ty_1,
+    pub iv_index_hash_shape: rb_shape__bindgen_ty_1__bindgen_ty_2,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct rb_shape__bindgen_ty_1__bindgen_ty_1 {
+    pub edge_name: ID,
+    pub capacity: u32,
+    pub next_iv_index: attr_index_t,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct rb_shape__bindgen_ty_1__bindgen_ty_2 {
+    pub iv_indexes: *mut rb_id_table,
+    pub previous_iv_index_hash_shape_id: shape_id_t,
 }
 pub type rb_shape_t = rb_shape;
 pub const idDot2: ruby_method_ids = 128;
@@ -1126,6 +1143,8 @@ extern "C" {
     pub fn rb_class_allocate_instance(klass: VALUE) -> VALUE;
     pub fn rb_obj_info(obj: VALUE) -> *const ::std::os::raw::c_char;
     pub fn rb_shape_id_offset() -> i32;
+    pub fn rb_shape_next_iv_index(shape: *mut rb_shape_t) -> attr_index_t;
+    pub fn rb_shape_capacity(shape: *mut rb_shape_t) -> u32;
     pub fn rb_shape_get_shape_by_id(shape_id: shape_id_t) -> *mut rb_shape_t;
     pub fn rb_shape_get_shape_id(obj: VALUE) -> shape_id_t;
     pub fn rb_shape_get_iv_index(shape: *mut rb_shape_t, id: ID, value: *mut attr_index_t) -> bool;

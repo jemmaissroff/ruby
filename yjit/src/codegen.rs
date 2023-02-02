@@ -2323,15 +2323,15 @@ fn gen_setinstancevariable(
             None => {
                 let shape = comptime_receiver.shape_of();
 
-                let current_capacity = unsafe { (*shape).capacity };
+                let current_capacity = unsafe { rb_shape_capacity(shape) };
                 let new_capacity = current_capacity * 2;
 
                 // If the object doesn't have the capacity to store the IV,
                 // then we'll need to allocate it.
-                let needs_extension = unsafe { (*shape).next_iv_index >= current_capacity };
+                let needs_extension = unsafe { rb_shape_next_iv_index(shape) >= current_capacity };
 
                 // We can write to the object, but we need to transition the shape
-                let ivar_index = unsafe { (*shape).next_iv_index } as usize;
+                let ivar_index = unsafe { rb_shape_next_iv_index(shape) } as usize;
 
                 let capa_shape = if needs_extension {
                     // We need to add an extended table to the object
