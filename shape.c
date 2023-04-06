@@ -121,23 +121,14 @@ rb_shape_get_shape(VALUE obj)
 }
 
 static rb_shape_t *
-shape_alloc(void)
+rb_shape_alloc_with_parent_id(ID edge_name, shape_id_t parent_id)
 {
     shape_id_t shape_id = GET_SHAPE_TREE()->next_shape_id;
     GET_SHAPE_TREE()->next_shape_id++;
 
-    if (shape_id == MAX_SHAPE_ID) {
-        // TODO: Make an OutOfShapesError ??
-        rb_bug("Out of shapes\n");
-    }
+    RUBY_ASSERT(shape_id != MAX_SHAPE_ID);
 
-    return &GET_SHAPE_TREE()->shape_list[shape_id];
-}
-
-static rb_shape_t *
-rb_shape_alloc_with_parent_id(ID edge_name, shape_id_t parent_id)
-{
-    rb_shape_t * shape = shape_alloc();
+    rb_shape_t * shape = &GET_SHAPE_TREE()->shape_list[shape_id];
 
     shape->edge_name = edge_name;
     shape->next_iv_index = 0;
@@ -148,20 +139,19 @@ rb_shape_alloc_with_parent_id(ID edge_name, shape_id_t parent_id)
 }
 
 static rb_shape_t *
-rb_shape_alloc(ID edge_name, rb_shape_t * parent, enum shape_type type)
-{
-    rb_shape_t * shape = rb_shape_alloc_with_parent_id(edge_name, rb_shape_id(parent));
-    shape->type = (uint8_t)type;
-    shape->size_pool_index = parent->size_pool_index;
-    shape->capacity = parent->capacity;
-    shape->edges = 0;
-    return shape;
-}
-
-static rb_shape_t *
 rb_shape_alloc_new_child(ID id, rb_shape_t * shape, enum shape_type shape_type)
 {
-    rb_shape_t * new_shape = rb_shape_alloc(id, shape, shape_type);
+    shape_id_t parent_shape_id = rb_shape_id(shape);
+
+    if (GET_SHAPE_TREE()->next_shape_id + 1 == MAX_SHAPE_ID) {
+      return &GET_SHAPE_TREE()->shape_list[OBJ_TOO_COMPLEX_SHAPE_ID];
+    }
+
+    rb_shape_t * new_shape = rb_shape_alloc_with_parent_id(id, parent_shape_id);
+    new_shape->type = (uint8_t)shape_type;
+    new_shape->size_pool_index = shape->size_pool_index;
+    new_shape->capacity = shape->capacity;
+    new_shape->edges = 0;
 
     switch (shape_type) {
       case SHAPE_IVAR:
@@ -882,6 +872,7 @@ Init_shape(void)
     rb_define_const(rb_cShape, "OBJ_TOO_COMPLEX_SHAPE_ID", INT2NUM(OBJ_TOO_COMPLEX_SHAPE_ID));
     rb_define_const(rb_cShape, "SHAPE_MAX_VARIATIONS", INT2NUM(SHAPE_MAX_VARIATIONS));
     rb_define_const(rb_cShape, "SHAPE_MAX_NUM_IVS", INT2NUM(SHAPE_MAX_NUM_IVS));
+    rb_define_const(rb_cShape, "MAX_SHAPE_ID", INT2NUM(MAX_SHAPE_ID));
 
     rb_define_singleton_method(rb_cShape, "transition_tree", shape_transition_tree, 0);
     rb_define_singleton_method(rb_cShape, "find_by_id", rb_shape_find_by_id, 1);

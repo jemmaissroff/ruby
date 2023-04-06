@@ -119,6 +119,15 @@ class TestShapes < Test::Unit::TestCase
     assert_predicate RubyVM::Shape.of(tc), :too_complex?
   end
 
+  def test_too_many_shapes
+    (RubyVM::Shape::MAX_SHAPE_ID + 1).times do |i|
+      obj = Class.new.new
+      iv_name = :"@a_#{i}"
+      obj.instance_variable_set(iv_name, i)
+      assert_equal obj.instance_variable_get(iv_name), i
+    end
+  end
+
   def test_ordered_alloc_is_not_complex
     5.times { OrderedAlloc.new.add_ivars }
     obj = JSON.parse(ObjectSpace.dump(OrderedAlloc))
