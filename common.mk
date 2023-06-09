@@ -214,9 +214,9 @@ YARP_FILES = yarp/api_node.$(OBJEXT) \
 		yarp/yarp_init.$(OBJEXT) \
 		yarp/extension.$(OBJEXT)
 
-$(YARP_FILES): $(YARP_BUILD_DIR)/.time $(YARP_BUILD_DIR)/enc/.time $(YARP_BUILD_DIR)/util/.time
+$(YARP_FILES): $(YARP_BUILD_DIR)/.time
 
-$(YARP_BUILD_DIR)/.time $(YARP_BUILD_DIR)/enc/.time $(YARP_BUILD_DIR)/util/.time:
+$(YARP_BUILD_DIR)/.time:
 	$(Q) $(MAKEDIRS) $(@D)
 	@$(NULLCMD) > $@
 

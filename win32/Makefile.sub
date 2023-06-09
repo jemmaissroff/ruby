@@ -1016,6 +1016,8 @@ s,@RMDIR@,$$(COMSPEC) /C $$(top_srcdir:/=\)\win32\rmdirs.bat,:t t
 s,@RMDIRS@,$$(COMSPEC) /C $$(top_srcdir:/=\)\win32\rmdirs.bat,;t t
 s,@RMALL@,$$(COMSPEC) /C $$(top_srcdir:/=\)\win32\rm.bat -f -r,:t t
 s,@MAKEDIRS@,$$(COMSPEC) /E:ON /C $$(top_srcdir:/=\)\win32\makedirs.bat,;t t
+s,@YARP_BUILD_DIR@,$(YARP_BUILD_DIR),;t t
+s,@YARP_FILES@,$(YARP_FILES),;t t
 s,@LIBOBJS@,$(LIBOBJS),;t t
 s,@ALLOCA@,$(ALLOCA),;t t
 s,@EXEEXT@,.exe,;t t
