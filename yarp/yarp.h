@@ -65,9 +65,6 @@ typedef struct {
     size_t node_count;
 } yp_memsize_t;
 
-// Calculates the memory footprint of a given node.
-YP_EXPORTED_FUNCTION extern void yp_node_memsize(yp_node_t *node, yp_memsize_t *memsize);
-
 // Pretty-prints the AST represented by the given node to the given buffer.
 YP_EXPORTED_FUNCTION extern void yp_prettyprint(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer);
 

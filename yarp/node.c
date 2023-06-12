@@ -107,7 +107,7 @@ yp_node_list_free(yp_parser_t *parser, yp_node_list_t *list) {
 // Deallocate the space for a yp_node_t. Similarly to yp_node_alloc, we're not
 // using the parser argument, but it's there to allow for the future possibility
 // of pre-allocating larger memory pools.
-YP_EXPORTED_FUNCTION void
+YP_EXPORTED_FUNCTION extern void
 yp_node_destroy(yp_parser_t *parser, yp_node_t *node) {
     switch (node->type) {
         case YP_NODE_ALIAS_NODE:
@@ -1319,11 +1319,4 @@ yp_node_memsize_node(yp_node_t *node, yp_memsize_t *memsize) {
             break;
         }
     }
-}
-
-// Calculates the memory footprint of a given node.
-YP_EXPORTED_FUNCTION extern void
-yp_node_memsize(yp_node_t *node, yp_memsize_t *memsize) {
-    *memsize = (yp_memsize_t) { .memsize = 0, .node_count = 0 };
-    yp_node_memsize_node(node, memsize);
 }

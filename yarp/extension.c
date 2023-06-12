@@ -399,6 +399,13 @@ unescape_all(VALUE self, VALUE source) {
     return unescape(source, YP_UNESCAPE_ALL);
 }
 
+// Calculates the memory footprint of a given node.
+static void
+yp_node_memsize(yp_node_t *node, yp_memsize_t *memsize) {
+    *memsize = (yp_memsize_t) { .memsize = 0, .node_count = 0 };
+    yp_node_memsize_node(node, memsize);
+}
+
 // This function returns a hash of information about the given source string's
 // memory usage.
 static VALUE
