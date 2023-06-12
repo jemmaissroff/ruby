@@ -1320,3 +1320,10 @@ yp_node_memsize_node(yp_node_t *node, yp_memsize_t *memsize) {
         }
     }
 }
+
+// Calculates the memory footprint of a given node.
+YP_EXPORTED_FUNCTION extern void
+yp_node_memsize(yp_node_t *node, yp_memsize_t *memsize) {
+    *memsize = (yp_memsize_t) { .memsize = 0, .node_count = 0 };
+    yp_node_memsize_node(node, memsize);
+}
