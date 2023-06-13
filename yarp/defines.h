@@ -21,8 +21,10 @@
 # define YP_EXPORTED_FUNCTION RUBY_FUNC_EXPORTED
 #endif
 
-#ifndef YP_ATTRIBUTE_UNUSED
-#define YP_ATTRIBUTE_UNUSED __attribute__((unused))
+#if defined(_WIN32)
+# define YP_ATTRIBUTE_UNUSED
+#else
+# define YP_ATTRIBUTE_UNUSED __attribute__((unused))
 #endif
 
 #endif
