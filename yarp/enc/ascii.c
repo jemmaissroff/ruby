@@ -22,25 +22,25 @@ static unsigned char yp_encoding_ascii_table[256] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // Fx
 };
 
-size_t
+YP_EXPORTED_FUNCTION size_t
 yp_encoding_ascii_char_width(const char *c) {
     const unsigned char v = (const unsigned char) *c;
     return v < 128 ? 1 : 0;
 }
 
-size_t
+YP_EXPORTED_FUNCTION size_t
 yp_encoding_ascii_alpha_char(const char *c) {
     const unsigned char v = (const unsigned char) *c;
     return (yp_encoding_ascii_table[v] & YP_ENCODING_ALPHABETIC_BIT) ? 1 : 0;
 }
 
-size_t
+YP_EXPORTED_FUNCTION size_t
 yp_encoding_ascii_alnum_char(const char *c) {
     const unsigned char v = (const unsigned char) *c;
     return (yp_encoding_ascii_table[v] & YP_ENCODING_ALPHANUMERIC_BIT) ? 1 : 0;
 }
 
-bool
+YP_EXPORTED_FUNCTION bool
 yp_encoding_ascii_isupper_char(const char *c) {
     const unsigned char v = (const unsigned char) *c;
     return (yp_encoding_ascii_table[v] & YP_ENCODING_UPPERCASE_BIT) ? true : false;
