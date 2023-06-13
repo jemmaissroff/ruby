@@ -140,12 +140,6 @@ jobs:
           RUBY_TESTOPTS: "-v --tty=no"
         if: ${{matrix.test_task == 'check' || matrix.test_task == 'test'}}
 
-      - name: Setup tmate session
-        timeout-minutes: 10
-        uses: mxschmitt/action-tmate@v3
-        with:
-         detached: true
-
       - name: test-all
         timeout-minutes: 45
         run: |
