@@ -20,13 +20,13 @@ size_t yp_encoding_single_char_width(YP_ATTRIBUTE_UNUSED const char *c);
 /* ASCII                                                                      */
 /******************************************************************************/
 
-YP_EXPORTED_FUNCTION extern size_t yp_encoding_ascii_char_width(const char *c);
+YP_EXPORTED_FUNCTION size_t yp_encoding_ascii_char_width(const char *c);
 
-YP_EXPORTED_FUNCTION extern size_t yp_encoding_ascii_alpha_char(const char *c);
+YP_EXPORTED_FUNCTION size_t yp_encoding_ascii_alpha_char(const char *c);
 
-YP_EXPORTED_FUNCTION extern size_t yp_encoding_ascii_alnum_char(const char *c);
+YP_EXPORTED_FUNCTION size_t yp_encoding_ascii_alnum_char(const char *c);
 
-YP_EXPORTED_FUNCTION extern bool yp_encoding_ascii_isupper_char(const char *c);
+YP_EXPORTED_FUNCTION bool yp_encoding_ascii_isupper_char(const char *c);
 
 /******************************************************************************/
 /* Big5                                                                       */
