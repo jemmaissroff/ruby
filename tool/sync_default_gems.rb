@@ -400,7 +400,7 @@ module SyncDefaultGems
     when "yarp"
       # We don't want to remove yarp_init.c, so we temporarily move it
       # out of the yarp dir, wipe the yarp dir, and then put it back
-      mv("yarp/yarp_init.c", ".")
+      mv("yarp/yarp_init.c", ".") if File.exist? "yarp/yarp_init.c"
       rm_rf(%w[test/yarp yarp])
       system("ruby #{upstream}/bin/template.rb")
       cp_r("#{upstream}/ext/yarp", "yarp")
@@ -408,6 +408,11 @@ module SyncDefaultGems
       cp_r("#{upstream}/test", "test/yarp")
 
       cp_r("#{upstream}/src/.", "yarp")
+      # Move all files in enc to be prefixed with yp_ in order
+      # to deconflict them from non-yarp enc files
+      (Dir.entries("yarp/enc/") - ["..", "."]).each do |f|
+        mv "yarp/enc/#{f}", "yarp/enc/yp_#{f}"
+      end
       cp_r("#{upstream}/include/yarp/.", "yarp")
       cp_r("#{upstream}/include/yarp.h", "yarp")
       rm("yarp/extconf.rb")

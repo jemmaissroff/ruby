@@ -19636,7 +19636,7 @@ yarp/enc/yp_iso_8859_9.$(OBJEXT): $(top_srcdir)/yarp/defines.h
 yarp/enc/yp_iso_8859_9.$(OBJEXT): $(top_srcdir)/yarp/enc/yp_iso_8859_9.c
 yarp/enc/yp_iso_8859_9.$(OBJEXT): $(top_srcdir)/yarp/enc/yp_encoding.h
 yarp/enc/yp_shared.$(OBJEXT): $(top_srcdir)/yarp/defines.h
-yarp/enc/yp_shared.$(OBJEXT): $(top_srcdir)/yarp/enc/shared.c
+yarp/enc/yp_shared.$(OBJEXT): $(top_srcdir)/yarp/enc/yp_shared.c
 yarp/enc/yp_shared.$(OBJEXT): $(top_srcdir)/yarp/enc/yp_encoding.h
 yarp/enc/yp_shift_jis.$(OBJEXT): $(top_srcdir)/yarp/defines.h
 yarp/enc/yp_shift_jis.$(OBJEXT): $(top_srcdir)/yarp/enc/yp_shift_jis.c
