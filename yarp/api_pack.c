@@ -190,7 +190,7 @@ pack_parse(VALUE self, VALUE version_symbol, VALUE variant_symbol, VALUE format_
 
         const char *directive_start = format;
 
-        yp_pack_result parse_result = yp_pack_parse(version, variant, &format, format_end, &type, &signed_type, &endian,
+        yp_pack_result parse_result = yp_pack_parse(variant, &format, format_end, &type, &signed_type, &endian,
                                                                                                 &size, &length_type, &length, &encoding);
 
         const char *directive_end = format;
