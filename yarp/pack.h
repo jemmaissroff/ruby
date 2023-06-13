@@ -120,7 +120,7 @@ typedef enum yp_pack_result {
 //
 // Notes:
 //   Consult Ruby documentation for the meaning of directives.
-YP_IMPORTED_FUNCTION extern yp_pack_result
+YP_EXPORTED_FUNCTION extern yp_pack_result
 yp_pack_parse(
     YP_ATTRIBUTE_UNUSED yp_pack_version version,
     yp_pack_variant variant_arg,
@@ -137,6 +137,6 @@ yp_pack_parse(
 
 // YARP abstracts sizes away from the native system - this converts an abstract
 // size to a native size.
-size_t yp_size_to_native(yp_pack_size size);
+YP_EXPORTED_FUNCTION extern size_t yp_size_to_native(yp_pack_size size);
 
 #endif

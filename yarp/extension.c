@@ -401,7 +401,7 @@ unescape_all(VALUE self, VALUE source) {
 
 // This function returns a hash of information about the given source string's
 // memory usage.
-VALUE
+static VALUE
 memsize(VALUE self, VALUE string) {
     yp_parser_t parser;
     size_t length = RSTRING_LEN(string);
