@@ -18,7 +18,11 @@
 #endif
 #endif
 #else
+#if defined(_WIN32)
+# define YP_EXPORTED_FUNCTION __declspec(dllexport) extern
+#else
 # define YP_EXPORTED_FUNCTION RUBY_FUNC_EXPORTED
+#endif
 #endif
 
 #if defined(_WIN32)
