@@ -86,7 +86,7 @@ YARP_FILES = yarp/api_node.$(OBJEXT) \
 		yarp/api_pack.$(OBJEXT) \
 		yarp/compile.$(OBJEXT) \
 		yarp/diagnostic.$(OBJEXT) \
-		yarp/enc/ascii.$(OBJEXT) \
+		yarp/enc/yarp_ascii.$(OBJEXT) \
 		yarp/enc/big5.$(OBJEXT) \
 		yarp/enc/euc_jp.$(OBJEXT) \
 		yarp/enc/iso_8859_1.$(OBJEXT) \
@@ -19581,9 +19581,9 @@ yarp/diagnostic.$(OBJEXT): $(top_srcdir)/yarp/defines.h
 yarp/diagnostic.$(OBJEXT): $(top_srcdir)/yarp/diagnostic.c
 yarp/diagnostic.$(OBJEXT): $(top_srcdir)/yarp/diagnostic.h
 yarp/diagnostic.$(OBJEXT): $(top_srcdir)/yarp/util/yp_list.h
-yarp/enc/ascii.$(OBJEXT): $(top_srcdir)/yarp/defines.h
-yarp/enc/ascii.$(OBJEXT): $(top_srcdir)/yarp/enc/ascii.c
-yarp/enc/ascii.$(OBJEXT): $(top_srcdir)/yarp/enc/yp_encoding.h
+yarp/enc/yarp_ascii.$(OBJEXT): $(top_srcdir)/yarp/defines.h
+yarp/enc/yarp_ascii.$(OBJEXT): $(top_srcdir)/yarp/enc/yarp_ascii.c
+yarp/enc/yarp_ascii.$(OBJEXT): $(top_srcdir)/yarp/enc/yp_encoding.h
 yarp/enc/big5.$(OBJEXT): $(top_srcdir)/yarp/defines.h
 yarp/enc/big5.$(OBJEXT): $(top_srcdir)/yarp/enc/big5.c
 yarp/enc/big5.$(OBJEXT): $(top_srcdir)/yarp/enc/yp_encoding.h
