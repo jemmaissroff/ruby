@@ -14,7 +14,7 @@
 // The function is shared between all of the encodings that use single bytes to
 // represent characters. They don't have need of a dynamic function to determine
 // their width.
-YP_EXPORTED_FUNCTION size_t yp_encoding_single_char_width(YP_ATTRIBUTE_UNUSED const char *c);
+YP_EXPORTED_FUNCTION size_t yp_encoding_single_char_width(const char *c YP_ATTRIBUTE_UNUSED);
 
 /******************************************************************************/
 /* ASCII                                                                      */
