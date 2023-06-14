@@ -39,6 +39,7 @@ source_file_load(source_t *source, VALUE filepath) {
 
     // mmap the file descriptor to virtually get the contents
     source->size = sb.st_size;
+#if HAVE_MMAP
     source->source = mmap(NULL, source->size, PROT_READ, MAP_PRIVATE, fd, 0);
 
     close(fd);
@@ -46,6 +47,10 @@ source_file_load(source_t *source, VALUE filepath) {
         perror("mmap");
         return 1;
     }
+#else
+    jemma();
+    return 1;
+#endif
 
     return 0;
 }
