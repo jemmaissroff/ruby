@@ -18,6 +18,36 @@ typedef struct {
     size_t size;
 } source_t;
 
+static const char *
+yp_mmap(int fd, size_t size) {
+#if HAVE_MMAP
+    char * res = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (res == MAP_FAILED) {
+        return NULL;
+    }
+    return res;
+#else
+    const char *source = malloc(size);
+    if (source == NULL) return NULL;
+
+    if (read(fd, source, size) != size) {
+        free(source);
+        return NULL;
+    }
+
+    return source;
+#endif
+}
+
+static void
+yp_munmap(void *source, size_t size) {
+#if HAVE_MMAP
+    munmap(source, size);
+#else
+    free(source);
+#endif
+}
+
 // Read the file indicated by the filepath parameter into source and load its
 // contents and size into the given source_t.
 static int
@@ -39,18 +69,13 @@ source_file_load(source_t *source, VALUE filepath) {
 
     // mmap the file descriptor to virtually get the contents
     source->size = sb.st_size;
-#if HAVE_MMAP
-    source->source = mmap(NULL, source->size, PROT_READ, MAP_PRIVATE, fd, 0);
+    source->source = yp_mmap(fd, source->size);
 
     close(fd);
-    if (source == MAP_FAILED) {
+    if (!source) {
         perror("mmap");
         return 1;
     }
-#else
-    jemma();
-    return 1;
-#endif
 
     return 0;
 }
@@ -68,7 +93,7 @@ source_string_load(source_t *source, VALUE string) {
 // Free any resources associated with the given source_t.
 static void
 source_file_unload(source_t *source) {
-    munmap((void *) source->source, source->size);
+    yp_munmap((void *) source->source, source->size);
 }
 
 // Dump the AST corresponding to the given source to a string.
