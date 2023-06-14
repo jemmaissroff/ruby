@@ -30,6 +30,21 @@ class ParseTest < Test::Unit::TestCase
       .gsub(__dir__, "")
   end
 
+  def test_parse_takes_file_path
+    filepath = "neat.rb"
+    parsed_result = YARP.parse("def foo; __FILE__; end", filepath)
+    m = ->(x) {
+      if x.is_a?(YARP::SourceFileNode)
+        x
+      else
+        x && x.child_nodes.each { |z| l = m.(z); return l if l }
+      end
+    }
+    actual_filepath = m.(parsed_result.value).filepath
+
+    assert_equal filepath, actual_filepath
+  end
+
   Dir[File.expand_path("fixtures/**/*.txt", __dir__)].each do |filepath|
     relative = filepath.delete_prefix("#{File.expand_path("fixtures", __dir__)}/")
     next if known_failures.include?(relative)
@@ -46,7 +61,7 @@ class ParseTest < Test::Unit::TestCase
       refute_nil Ripper.sexp_raw(source)
 
       # Next, parse the source and print the value.
-      result = YARP.parse_file_dup(filepath)
+      result = YARP.parse_file(filepath)
       value = result.value
       printed = normalize_printed(PP.pp(value, +"", 79))
 

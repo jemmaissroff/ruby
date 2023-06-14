@@ -294,10 +294,19 @@ parse_source(source_t *source, char *filepath) {
 }
 
 static VALUE
-parse(VALUE self, VALUE string) {
+parse(VALUE self, VALUE string, VALUE filepath) {
     source_t source;
     source_string_load(&source, string);
-    return parse_source(&source, NULL);
+#ifdef YARP_DEBUG
+    char* dup = malloc(source.size);
+    memcpy(dup, source.source, source.size);
+    source.source = dup;
+#endif
+    VALUE value = parse_source(&source, NIL_P(filepath) ? NULL : StringValueCStr(filepath));
+#ifdef YARP_DEBUG
+    free(dup);
+#endif
+    return value;
 }
 
 static VALUE
@@ -309,20 +318,6 @@ parse_file(VALUE self, VALUE rb_filepath) {
 
     VALUE value = parse_source(&source, StringValueCStr(rb_filepath));
     source_file_unload(&source);
-    return value;
-}
-
-static VALUE
-parse_dup(VALUE self, VALUE string, VALUE filepath) {
-    source_t source;
-    source_string_load(&source, string);
-
-    char* dup = malloc(source.size);
-    memcpy(dup, source.source, source.size);
-    source.source = dup;
-
-    VALUE value = parse_source(&source, NIL_P(filepath) ? NULL : StringValueCStr(filepath));
-    free(dup);
     return value;
 }
 
@@ -457,10 +452,8 @@ Init_yarp(void) {
     rb_define_singleton_method(rb_cYARP, "lex", lex, 2);
     rb_define_singleton_method(rb_cYARP, "lex_file", lex_file, 1);
 
-    rb_define_singleton_method(rb_cYARP, "parse", parse, 1);
+    rb_define_singleton_method(rb_cYARP, "_parse", parse, 2);
     rb_define_singleton_method(rb_cYARP, "parse_file", parse_file, 1);
-
-    rb_define_singleton_method(rb_cYARP, "_parse_dup", parse_dup, 2);
 
     rb_define_singleton_method(rb_cYARP, "named_captures", named_captures, 1);
 

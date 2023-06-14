@@ -229,12 +229,8 @@ module YARP
     Serialize.load(source, serialized)
   end
 
-  def self.parse_file_dup(file)
-    parse_dup File.read(file), file
-  end
-
-  def self.parse_dup(string, path = nil)
-    _parse_dup string, path
+  def self.parse(source, filepath=nil)
+    _parse(source, filepath)
   end
 end
 
@@ -246,5 +242,7 @@ require_relative "yarp/pack"
 require "yarp.so"
 
 module YARP
-  class << self; private :_parse_dup; end
+  class << self
+    private :_parse
+  end
 end
