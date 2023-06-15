@@ -11,11 +11,11 @@ yp_version(void) {
     return YP_VERSION_MACRO;
 }
 
-#ifndef YP_DEBUG
-#define YP_DEBUG 0
+#ifndef YP_DEBUG_LOGGING
+#define YP_DEBUG_LOGGING 0
 #endif
 
-#if YP_DEBUG
+#if YP_DEBUG_LOGGING
 
 /******************************************************************************/
 /* Debugging                                                                  */
@@ -267,7 +267,7 @@ lex_state_set(yp_parser_t *parser, yp_lex_state_t state) {
     parser->lex_state = state;
 }
 
-#if YP_DEBUG
+#if YP_DEBUG_LOGGING
 static inline void
 debug_lex_state_set(yp_parser_t *parser, yp_lex_state_t state, char const * caller_name, int line_number) {
     fprintf(stderr, "Caller: %s:%d\nPrevious: ", caller_name, line_number);
@@ -3914,9 +3914,9 @@ parser_lex_encoding_comment(yp_parser_t *parser) {
     // These are the patterns we're going to match to find the encoding comment.
     // This is definitely not complete or even really correct.
     const char *encoding_start = NULL;
-    if ((encoding_start = strnstr(start, "coding:", (size_t) (end - start))) != NULL) {
+    if ((encoding_start = yp_strnstr(start, "coding:", (size_t) (end - start))) != NULL) {
         encoding_start += 7;
-    } else if ((encoding_start = strnstr(start, "coding=", (size_t) (end - start))) != NULL) {
+    } else if ((encoding_start = yp_strnstr(start, "coding=", (size_t) (end - start))) != NULL) {
         encoding_start += 7;
     }
 
@@ -12093,7 +12093,6 @@ yp_parser_init(yp_parser_t *parser, const char *source, size_t size, const char 
     size_t constant_size = size / 95;
     yp_constant_pool_init(&parser->constant_pool, constant_size < 4 ? 4 : constant_size);
 
-    assert(source);
     if (size >= 3 && (unsigned char) source[0] == 0xef && (unsigned char) source[1] == 0xbb && (unsigned char) source[2] == 0xbf) {
         // If the first three bytes of the source are the UTF-8 BOM, then we'll skip
         // over them.

@@ -20,30 +20,29 @@ typedef struct {
 
 static const char *
 yp_mmap(int fd, size_t size) {
-#if HAVE_MMAP
-    assert(false);
+#ifdef HAVE_MMAP
     char * res = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (res == MAP_FAILED) {
         return NULL;
     }
     return res;
 #else
-    assert(false);
-    const char *source = malloc(size);
+    void *source = malloc(size);
     if (source == NULL) return NULL;
 
-    if (read(fd, source, size) != size) {
+    ssize_t read_size = read(fd, source, size);
+    if (read_size < 0 || (size_t)read_size != size) {
         free(source);
         return NULL;
     }
 
-    return source;
+    return (const char *)source;
 #endif
 }
 
 static void
 yp_munmap(void *source, size_t size) {
-#if HAVE_MMAP
+#ifdef HAVE_MMAP
     munmap(source, size);
 #else
     free(source);
@@ -329,13 +328,13 @@ static VALUE
 parse(VALUE self, VALUE string, VALUE filepath) {
     source_t source;
     source_string_load(&source, string);
-#ifdef YARP_DEBUG
+#ifdef YARP_DEBUG_MODE_BUILD
     char* dup = malloc(source.size);
     memcpy(dup, source.source, source.size);
     source.source = dup;
 #endif
     VALUE value = parse_source(&source, NIL_P(filepath) ? NULL : StringValueCStr(filepath));
-#ifdef YARP_DEBUG
+#ifdef YARP_DEBUG_MODE_BUILD
     free(dup);
 #endif
     return value;

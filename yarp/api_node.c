@@ -2206,7 +2206,6 @@ VALUE yp_ast_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding) {
     }
 
     VALUE res_node = yp_node_new(parser, node, encoding, constants);
-    // TODO: use rb_ensure to make sure `free` gets called
     free(constants);
     return res_node;
 }
