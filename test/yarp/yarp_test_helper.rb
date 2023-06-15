@@ -63,7 +63,7 @@ module YARP
           "start_offset > end_offset for #{actual.inspect}, parent is #{parent.pretty_inspect}"
         }
         if compare_location
-          if !(IS_WINDOWS_HOST && WINDOWS_DISABLED_NODE_CLASSES.include?(parent.class))
+          if !IS_WINDOWS_HOST
             assert_equal(
               expected.start_offset,
               actual.start_offset,

@@ -121,7 +121,6 @@ YARP_FILES = yarp/api_node.$(OBJEXT) \
 		yarp/util/yp_buffer.$(OBJEXT) \
 		yarp/util/yp_char.$(OBJEXT) \
 		yarp/util/yp_constant_pool.$(OBJEXT) \
-		yarp/util/yp_conversion.$(OBJEXT) \
 		yarp/util/yp_list.$(OBJEXT) \
 		yarp/util/yp_newline_list.$(OBJEXT) \
 		yarp/util/yp_state_stack.$(OBJEXT) \
@@ -19897,7 +19896,6 @@ yarp/serialize.$(OBJEXT): $(top_srcdir)/yarp/parser.h
 yarp/serialize.$(OBJEXT): $(top_srcdir)/yarp/serialize.c
 yarp/serialize.$(OBJEXT): $(top_srcdir)/yarp/util/yp_buffer.h
 yarp/serialize.$(OBJEXT): $(top_srcdir)/yarp/util/yp_constant_pool.h
-yarp/serialize.$(OBJEXT): $(top_srcdir)/yarp/util/yp_conversion.h
 yarp/serialize.$(OBJEXT): $(top_srcdir)/yarp/util/yp_list.h
 yarp/serialize.$(OBJEXT): $(top_srcdir)/yarp/util/yp_state_stack.h
 yarp/serialize.$(OBJEXT): $(top_srcdir)/yarp/util/yp_string.h
@@ -19921,9 +19919,6 @@ yarp/util/yp_char.$(OBJEXT): $(top_srcdir)/yarp/util/yp_char.c
 yarp/util/yp_char.$(OBJEXT): $(top_srcdir)/yarp/util/yp_char.h
 yarp/util/yp_constant_pool.$(OBJEXT): $(top_srcdir)/yarp/util/yp_constant_pool.c
 yarp/util/yp_constant_pool.$(OBJEXT): $(top_srcdir)/yarp/util/yp_constant_pool.h
-yarp/util/yp_conversion.$(OBJEXT): $(top_srcdir)/yarp/defines.h
-yarp/util/yp_conversion.$(OBJEXT): $(top_srcdir)/yarp/util/yp_conversion.c
-yarp/util/yp_conversion.$(OBJEXT): $(top_srcdir)/yarp/util/yp_conversion.h
 yarp/util/yp_list.$(OBJEXT): $(top_srcdir)/yarp/defines.h
 yarp/util/yp_list.$(OBJEXT): $(top_srcdir)/yarp/util/yp_list.c
 yarp/util/yp_list.$(OBJEXT): $(top_srcdir)/yarp/util/yp_list.h

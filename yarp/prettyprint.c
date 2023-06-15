@@ -1484,7 +1484,7 @@ prettyprint_node(yp_buffer_t *buffer, yp_parser_t *parser, yp_node_t *node) {
 void
 yp_print_node(yp_parser_t *parser, yp_node_t *node) {
     yp_buffer_t buffer;
-    yp_buffer_init(&buffer);
+    if (!yp_buffer_init(&buffer)) return;
 
     prettyprint_node(&buffer, parser, node);
     printf("%.*s\n", (int) buffer.length, buffer.value);
