@@ -73,10 +73,12 @@ source_file_load(source_t *source, VALUE filepath) {
     source->source = yp_mmap(fd, source->size);
 
     close(fd);
-    if (!source) {
+    if (!source->source) {
         perror("mmap");
         return 1;
     }
+
+    assert(source->source);
 
     return 0;
 }
