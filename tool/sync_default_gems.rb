@@ -402,7 +402,7 @@ module SyncDefaultGems
       # out of the yarp dir, wipe the yarp dir, and then put it back
       mv("yarp/yarp_init.c", ".") if File.exist? "yarp/yarp_init.c"
       rm_rf(%w[test/yarp yarp])
-      system("ruby #{upstream}/bin/template.rb")
+      system("ruby #{upstream}/templates/template.rb")
       cp_r("#{upstream}/ext/yarp", "yarp")
       cp_r("#{upstream}/lib/.", "lib")
       cp_r("#{upstream}/test", "test/yarp")
