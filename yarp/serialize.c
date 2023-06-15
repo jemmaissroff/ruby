@@ -625,7 +625,12 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             break;
         }
         case YP_NODE_IF_NODE: {
-            serialize_location(parser, &((yp_if_node_t *)node)->if_keyword_loc, buffer);
+            if (((yp_if_node_t *)node)->if_keyword_loc.start == NULL) {
+                yp_buffer_append_u8(buffer, 0);
+            } else {
+                yp_buffer_append_u8(buffer, 1);
+                serialize_location(parser, &((yp_if_node_t *)node)->if_keyword_loc, buffer);
+            }
             yp_serialize_node(parser, (yp_node_t *)((yp_if_node_t *)node)->predicate, buffer);
             if (((yp_if_node_t *)node)->statements == NULL) {
                 yp_buffer_append_u8(buffer, 0);

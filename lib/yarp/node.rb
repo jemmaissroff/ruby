@@ -1707,7 +1707,7 @@ module YARP
   #     if foo then bar end
   #     ^^^^^^^^^^^^^^^^^^^
   class IfNode < Node
-    # attr_reader if_keyword_loc: Location
+    # attr_reader if_keyword_loc: Location?
     attr_reader :if_keyword_loc
 
     # attr_reader predicate: Node
@@ -1722,7 +1722,7 @@ module YARP
     # attr_reader end_keyword_loc: Location?
     attr_reader :end_keyword_loc
 
-    # def initialize: (if_keyword_loc: Location, predicate: Node, statements: Node?, consequent: Node?, end_keyword_loc: Location?, start_offset: Integer, length: Integer) -> void
+    # def initialize: (if_keyword_loc: Location?, predicate: Node, statements: Node?, consequent: Node?, end_keyword_loc: Location?, start_offset: Integer, length: Integer) -> void
     def initialize(if_keyword_loc, predicate, statements, consequent, end_keyword_loc, start_offset, length)
       @if_keyword_loc = if_keyword_loc
       @predicate = predicate

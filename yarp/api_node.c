@@ -864,7 +864,7 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             VALUE argv[7];
 
             // if_keyword_loc
-            argv[0] = location_new(parser, cast->if_keyword_loc.start, cast->if_keyword_loc.end);
+            argv[0] = cast->if_keyword_loc.start == NULL ? Qnil : location_new(parser, cast->if_keyword_loc.start, cast->if_keyword_loc.end);
 
             // predicate
             argv[1] = yp_node_new(parser, (yp_node_t *) cast->predicate, encoding, constants);

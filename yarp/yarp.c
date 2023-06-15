@@ -511,6 +511,9 @@ yp_array_node_size(yp_array_node_t *node) {
 // Append an argument to an array node.
 static inline void
 yp_array_node_elements_append(yp_array_node_t *node, yp_node_t *element) {
+    if (!node->elements.size && !node->opening_loc.start) {
+        node->base.location.start = element->location.start;
+    }
     yp_node_list_append(&node->elements, element);
     node->base.location.end = element->location.end;
 }
@@ -712,9 +715,13 @@ yp_begin_node_create(yp_parser_t *parser, const yp_token_t *begin_keyword, yp_st
     return node;
 }
 
-// Set the rescue clause and end location of a begin node.
+// Set the rescue clause, optionally start, and end location of a begin node.
 static void
 yp_begin_node_rescue_clause_set(yp_begin_node_t *node, yp_rescue_node_t *rescue_clause) {
+    // If the begin keyword doesn't exist, we set the start on the begin_node
+    if (!node->begin_keyword_loc.start) {
+        node->base.location.start = rescue_clause->base.location.start;
+    }
     node->base.location.end = rescue_clause->base.location.end;
     node->rescue_clause = rescue_clause;
 }
@@ -1694,7 +1701,7 @@ yp_if_node_modifier_create(yp_parser_t *parser, yp_node_t *statement, const yp_t
 
 // Allocate and initialize an if node from a ternary expression.
 static yp_if_node_t *
-yp_if_node_ternary_create(yp_parser_t *parser, yp_node_t *predicate, const yp_token_t *question_mark, yp_node_t *true_expression, const yp_token_t *colon, yp_node_t *false_expression) {
+yp_if_node_ternary_create(yp_parser_t *parser, yp_node_t *predicate, yp_node_t *true_expression, const yp_token_t *colon, yp_node_t *false_expression) {
     yp_statements_node_t *if_statements = yp_statements_node_create(parser);
     yp_statements_node_body_append(if_statements, true_expression);
 
@@ -1704,7 +1711,25 @@ yp_if_node_ternary_create(yp_parser_t *parser, yp_node_t *predicate, const yp_to
     yp_token_t end_keyword = not_provided(parser);
     yp_else_node_t *else_node = yp_else_node_create(parser, colon, else_statements, &end_keyword);
 
-    return yp_if_node_create(parser, question_mark, predicate, if_statements, (yp_node_t *)else_node, &end_keyword);
+    yp_if_node_t *node = yp_alloc(parser, sizeof(yp_if_node_t));
+
+    *node = (yp_if_node_t) {
+        {
+            .type = YP_NODE_IF_NODE,
+            .location = {
+                .start = predicate->location.start,
+                .end = false_expression->location.end,
+            },
+        },
+        .if_keyword_loc = YP_OPTIONAL_LOCATION_NOT_PROVIDED_VALUE,
+        .predicate = predicate,
+        .statements = if_statements,
+        .consequent = (yp_node_t *)else_node,
+        .end_keyword_loc = YP_OPTIONAL_LOCATION_NOT_PROVIDED_VALUE
+    };
+
+    return node;
+
 }
 
 static inline void
@@ -3006,7 +3031,7 @@ yp_statements_node_create(yp_parser_t *parser) {
 // Get the length of the given StatementsNode node's body.
 static size_t
 yp_statements_node_body_length(yp_statements_node_t *node) {
-    return node->body.size;
+    return node && node->body.size;
 }
 
 // Set the location of the given StatementsNode.
@@ -7402,17 +7427,14 @@ parse_targets(yp_parser_t *parser, yp_node_t *first_target, yp_binding_power_t b
 // Parse a list of statements separated by newlines or semicolons.
 static yp_statements_node_t *
 parse_statements(yp_parser_t *parser, yp_context_t context) {
-    yp_statements_node_t *statements = yp_statements_node_create(parser);
-
     // First, skip past any optional terminators that might be at the beginning of
     // the statements.
     while (accept_any(parser, 2, YP_TOKEN_SEMICOLON, YP_TOKEN_NEWLINE));
 
-    // Now, if we have a terminator, then we can just return the empty statements
-    // node. We should come back in here and make it so that the callers of this
-    // function can expect a NULL, in which case we wouldn't have to allocate the
-    // statements at all.
-    if (context_terminator(context, &parser->current)) return statements;
+    // If we have a terminator, then we can just return NULL.
+    if (context_terminator(context, &parser->current)) return NULL;
+
+    yp_statements_node_t *statements = yp_statements_node_create(parser);
 
     // At this point we know we have at least one statement, and that it
     // immediately follows the current token.
@@ -8151,7 +8173,10 @@ parse_rescues(yp_parser_t *parser, yp_begin_node_t *parent_node) {
         }
 
         if (!match_any_type_p(parser, 3, YP_TOKEN_KEYWORD_ELSE, YP_TOKEN_KEYWORD_ENSURE, YP_TOKEN_KEYWORD_END)) {
-            yp_rescue_node_statements_set(rescue, parse_statements(parser, YP_CONTEXT_RESCUE));
+            yp_statements_node_t *statements = parse_statements(parser, YP_CONTEXT_RESCUE);
+            if (statements) {
+                yp_rescue_node_statements_set(rescue, statements);
+            }
             accept_any(parser, 2, YP_TOKEN_NEWLINE, YP_TOKEN_SEMICOLON);
         }
 
@@ -8162,6 +8187,18 @@ parse_rescues(yp_parser_t *parser, yp_begin_node_t *parent_node) {
         }
 
         current = rescue;
+    }
+
+    // The end node locations on rescue nodes will not be set correctly
+    // since we won't know the end until we've found all consequent
+    // clauses. This sets the end location on all rescues once we know it
+    if (current) {
+        const char *end_to_set = current->base.location.end;
+        current = parent_node->rescue_clause;
+        while (current) {
+            current->base.location.end = end_to_set;
+            current = current->consequent;
+        }
     }
 
     if (accept(parser, YP_TOKEN_KEYWORD_ELSE)) {
@@ -10020,7 +10057,10 @@ parse_expression_prefix(yp_parser_t *parser, yp_binding_power_t binding_power) {
                     }
 
                     if (!match_any_type_p(parser, 3, YP_TOKEN_KEYWORD_WHEN, YP_TOKEN_KEYWORD_ELSE, YP_TOKEN_KEYWORD_END)) {
-                        yp_when_node_statements_set(when_node, parse_statements(parser, YP_CONTEXT_CASE_WHEN));
+                        yp_statements_node_t *statements = parse_statements(parser, YP_CONTEXT_CASE_WHEN);
+                        if (statements != NULL) {
+                            yp_when_node_statements_set(when_node, statements);
+                        }
                     }
 
                     yp_case_node_condition_append(case_node, (yp_node_t *) when_node);
@@ -11821,7 +11861,7 @@ parse_expression_infix(yp_parser_t *parser, yp_node_t *node, yp_binding_power_t 
                 yp_token_t colon = (yp_token_t) { .type = YP_TOKEN_MISSING, .start = parser->previous.end, .end = parser->previous.end };
                 yp_node_t *false_expression = (yp_node_t *) yp_missing_node_create(parser, colon.start, colon.end);
 
-                return (yp_node_t *) yp_if_node_ternary_create(parser, node, &token, true_expression, &colon, false_expression);
+                return (yp_node_t *) yp_if_node_ternary_create(parser, node, true_expression, &colon, false_expression);
             }
 
             accept(parser, YP_TOKEN_NEWLINE);
@@ -11830,7 +11870,7 @@ parse_expression_infix(yp_parser_t *parser, yp_node_t *node, yp_binding_power_t 
             yp_token_t colon = parser->previous;
             yp_node_t *false_expression = parse_expression(parser, YP_BINDING_POWER_DEFINED, "Expected a value after ':'");
 
-            return (yp_node_t *) yp_if_node_ternary_create(parser, node, &token, true_expression, &colon, false_expression);
+            return (yp_node_t *) yp_if_node_ternary_create(parser, node, true_expression, &colon, false_expression);
         }
         case YP_TOKEN_COLON_COLON: {
             parser_lex(parser);
@@ -12094,6 +12134,9 @@ parse_program(yp_parser_t *parser) {
     parser_lex(parser);
 
     yp_statements_node_t *statements = parse_statements(parser, YP_CONTEXT_MAIN);
+    if (!statements) {
+        statements = yp_statements_node_create(parser);
+    }
     yp_constant_id_list_t locals = parser->current_scope->locals;
     yp_parser_scope_pop(parser);
 

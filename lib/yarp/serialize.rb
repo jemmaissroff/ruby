@@ -355,7 +355,7 @@ module YARP
         when 38 then
           HashPatternNode.new(load_optional_node, Array.new(load_varint) { load_node }, load_optional_node, load_optional_location, load_optional_location, start_offset, length)
         when 39 then
-          IfNode.new(load_location, load_node, load_optional_node, load_optional_node, load_optional_location, start_offset, length)
+          IfNode.new(load_optional_location, load_node, load_optional_node, load_optional_node, load_optional_location, start_offset, length)
         when 40 then
           ImaginaryNode.new(load_node, start_offset, length)
         when 41 then

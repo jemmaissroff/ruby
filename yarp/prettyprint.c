@@ -648,7 +648,11 @@ prettyprint_node(yp_buffer_t *buffer, yp_parser_t *parser, yp_node_t *node) {
         }
         case YP_NODE_IF_NODE: {
             yp_buffer_append_str(buffer, "IfNode(", 7);
-                        prettyprint_location(buffer, parser, &((yp_if_node_t *)node)->if_keyword_loc);
+                        if (((yp_if_node_t *)node)->if_keyword_loc.start == NULL) {
+                yp_buffer_append_str(buffer, "nil", 3);
+            } else {
+                prettyprint_location(buffer, parser, &((yp_if_node_t *)node)->if_keyword_loc);
+            }
             yp_buffer_append_str(buffer, ", ", 2);            prettyprint_node(buffer, parser, (yp_node_t *)((yp_if_node_t *)node)->predicate);
             yp_buffer_append_str(buffer, ", ", 2);            if (((yp_if_node_t *)node)->statements == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
