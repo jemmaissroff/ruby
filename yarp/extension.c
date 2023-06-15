@@ -31,9 +31,15 @@ yp_mmap(int fd, size_t size) {
     if (source == NULL) return NULL;
 
     ssize_t read_size = read(fd, source, size);
-    if (read_size < 0 || (size_t)read_size != size) {
+    if (read_size < 0) {
+        perror("negative read size");
         free(source);
         return NULL;
+    }
+    if ((size_t)read_size != size) {
+      perror("sizes aren't equal");
+      free(source);
+      return NULL;
     }
 
     return (const char *)source;
