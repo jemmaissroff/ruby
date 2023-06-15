@@ -123,6 +123,7 @@ YARP_FILES = yarp/api_node.$(OBJEXT) \
 		yarp/util/yp_constant_pool.$(OBJEXT) \
 		yarp/util/yp_conversion.$(OBJEXT) \
 		yarp/util/yp_list.$(OBJEXT) \
+		yarp/util/yp_newline_list.$(OBJEXT) \
 		yarp/util/yp_state_stack.$(OBJEXT) \
 		yarp/util/yp_string.$(OBJEXT) \
 		yarp/util/yp_string_list.$(OBJEXT) \
