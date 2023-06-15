@@ -21,12 +21,14 @@ typedef struct {
 static const char *
 yp_mmap(int fd, size_t size) {
 #if HAVE_MMAP
+    assert(false);
     char * res = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (res == MAP_FAILED) {
         return NULL;
     }
     return res;
 #else
+    assert(false);
     const char *source = malloc(size);
     if (source == NULL) return NULL;
 
