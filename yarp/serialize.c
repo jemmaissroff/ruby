@@ -241,7 +241,7 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             uint32_t locals_size = yp_ulong_to_u32(((yp_block_parameters_node_t *)node)->locals.size);
             yp_buffer_append_u32(buffer, locals_size);
             for (uint32_t index = 0; index < locals_size; index++) {
-                serialize_token(parser, &((yp_block_parameters_node_t *)node)->locals.tokens[index], buffer);
+                serialize_location(parser, &((yp_block_parameters_node_t *)node)->locals.locations[index], buffer);
             }
             if (((yp_block_parameters_node_t *)node)->opening_loc.start == NULL) {
                 yp_buffer_append_u8(buffer, 0);
@@ -272,36 +272,41 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             } else {
                 yp_serialize_node(parser, (yp_node_t *)((yp_call_node_t *)node)->receiver, buffer);
             }
-            if (((yp_call_node_t *)node)->call_operator.type == YP_TOKEN_NOT_PROVIDED) {
+            if (((yp_call_node_t *)node)->operator_loc.start == NULL) {
                 yp_buffer_append_u8(buffer, 0);
             } else {
-                serialize_token(parser, &((yp_call_node_t *)node)->call_operator, buffer);
+                yp_buffer_append_u8(buffer, 1);
+                serialize_location(parser, &((yp_call_node_t *)node)->operator_loc, buffer);
             }
-            if (((yp_call_node_t *)node)->message.type == YP_TOKEN_NOT_PROVIDED) {
+            if (((yp_call_node_t *)node)->message_loc.start == NULL) {
                 yp_buffer_append_u8(buffer, 0);
             } else {
-                serialize_token(parser, &((yp_call_node_t *)node)->message, buffer);
+                yp_buffer_append_u8(buffer, 1);
+                serialize_location(parser, &((yp_call_node_t *)node)->message_loc, buffer);
             }
-            if (((yp_call_node_t *)node)->opening.type == YP_TOKEN_NOT_PROVIDED) {
+            if (((yp_call_node_t *)node)->opening_loc.start == NULL) {
                 yp_buffer_append_u8(buffer, 0);
             } else {
-                serialize_token(parser, &((yp_call_node_t *)node)->opening, buffer);
+                yp_buffer_append_u8(buffer, 1);
+                serialize_location(parser, &((yp_call_node_t *)node)->opening_loc, buffer);
             }
             if (((yp_call_node_t *)node)->arguments == NULL) {
                 yp_buffer_append_u8(buffer, 0);
             } else {
                 yp_serialize_node(parser, (yp_node_t *)((yp_call_node_t *)node)->arguments, buffer);
             }
-            if (((yp_call_node_t *)node)->closing.type == YP_TOKEN_NOT_PROVIDED) {
+            if (((yp_call_node_t *)node)->closing_loc.start == NULL) {
                 yp_buffer_append_u8(buffer, 0);
             } else {
-                serialize_token(parser, &((yp_call_node_t *)node)->closing, buffer);
+                yp_buffer_append_u8(buffer, 1);
+                serialize_location(parser, &((yp_call_node_t *)node)->closing_loc, buffer);
             }
             if (((yp_call_node_t *)node)->block == NULL) {
                 yp_buffer_append_u8(buffer, 0);
             } else {
                 yp_serialize_node(parser, (yp_node_t *)((yp_call_node_t *)node)->block, buffer);
             }
+            yp_buffer_append_u32(buffer, ((yp_call_node_t *)node)->flags);
             uint32_t name_length = yp_ulong_to_u32(yp_string_length(&((yp_call_node_t *)node)->name));
             yp_buffer_append_u32(buffer, name_length);
             yp_buffer_append_str(buffer, yp_string_source(&((yp_call_node_t *)node)->name), name_length);
@@ -734,20 +739,22 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             break;
         }
         case YP_NODE_INTERPOLATED_SYMBOL_NODE: {
-            if (((yp_interpolated_symbol_node_t *)node)->opening.type == YP_TOKEN_NOT_PROVIDED) {
+            if (((yp_interpolated_symbol_node_t *)node)->opening_loc.start == NULL) {
                 yp_buffer_append_u8(buffer, 0);
             } else {
-                serialize_token(parser, &((yp_interpolated_symbol_node_t *)node)->opening, buffer);
+                yp_buffer_append_u8(buffer, 1);
+                serialize_location(parser, &((yp_interpolated_symbol_node_t *)node)->opening_loc, buffer);
             }
             uint32_t parts_size = yp_ulong_to_u32(((yp_interpolated_symbol_node_t *)node)->parts.size);
             yp_buffer_append_u32(buffer, parts_size);
             for (uint32_t index = 0; index < parts_size; index++) {
                 yp_serialize_node(parser, (yp_node_t *) ((yp_interpolated_symbol_node_t *)node)->parts.nodes[index], buffer);
             }
-            if (((yp_interpolated_symbol_node_t *)node)->closing.type == YP_TOKEN_NOT_PROVIDED) {
+            if (((yp_interpolated_symbol_node_t *)node)->closing_loc.start == NULL) {
                 yp_buffer_append_u8(buffer, 0);
             } else {
-                serialize_token(parser, &((yp_interpolated_symbol_node_t *)node)->closing, buffer);
+                yp_buffer_append_u8(buffer, 1);
+                serialize_location(parser, &((yp_interpolated_symbol_node_t *)node)->closing_loc, buffer);
             }
             break;
         }
@@ -1235,16 +1242,18 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             break;
         }
         case YP_NODE_SYMBOL_NODE: {
-            if (((yp_symbol_node_t *)node)->opening.type == YP_TOKEN_NOT_PROVIDED) {
+            if (((yp_symbol_node_t *)node)->opening_loc.start == NULL) {
                 yp_buffer_append_u8(buffer, 0);
             } else {
-                serialize_token(parser, &((yp_symbol_node_t *)node)->opening, buffer);
+                yp_buffer_append_u8(buffer, 1);
+                serialize_location(parser, &((yp_symbol_node_t *)node)->opening_loc, buffer);
             }
-            serialize_token(parser, &((yp_symbol_node_t *)node)->value, buffer);
-            if (((yp_symbol_node_t *)node)->closing.type == YP_TOKEN_NOT_PROVIDED) {
+            serialize_location(parser, &((yp_symbol_node_t *)node)->value_loc, buffer);
+            if (((yp_symbol_node_t *)node)->closing_loc.start == NULL) {
                 yp_buffer_append_u8(buffer, 0);
             } else {
-                serialize_token(parser, &((yp_symbol_node_t *)node)->closing, buffer);
+                yp_buffer_append_u8(buffer, 1);
+                serialize_location(parser, &((yp_symbol_node_t *)node)->closing_loc, buffer);
             }
             uint32_t unescaped_length = yp_ulong_to_u32(yp_string_length(&((yp_symbol_node_t *)node)->unescaped));
             yp_buffer_append_u32(buffer, unescaped_length);

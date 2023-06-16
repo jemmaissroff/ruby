@@ -313,7 +313,8 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             // locals
             argv[1] = rb_ary_new();
             for (size_t index = 0; index < cast->locals.size; index++) {
-                rb_ary_push(argv[1], yp_token_new(parser, &cast->locals.tokens[index], encoding));
+                yp_location_t location = cast->locals.locations[index];
+                rb_ary_push(argv[1], location_new(parser, location.start, location.end));
             }
 
             // opening_loc
@@ -348,37 +349,40 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
 #line 36 "api_node.c.erb"
         case YP_NODE_CALL_NODE: {
             yp_call_node_t *cast = (yp_call_node_t *) node;
-            VALUE argv[10];
+            VALUE argv[11];
 
             // receiver
             argv[0] = cast->receiver == NULL ? Qnil : yp_node_new(parser, (yp_node_t *) cast->receiver, encoding, constants);
 
-            // call_operator
-            argv[1] = cast->call_operator.type == YP_TOKEN_NOT_PROVIDED ? Qnil : yp_token_new(parser, &cast->call_operator, encoding);
+            // operator_loc
+            argv[1] = cast->operator_loc.start == NULL ? Qnil : location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
 
-            // message
-            argv[2] = cast->message.type == YP_TOKEN_NOT_PROVIDED ? Qnil : yp_token_new(parser, &cast->message, encoding);
+            // message_loc
+            argv[2] = cast->message_loc.start == NULL ? Qnil : location_new(parser, cast->message_loc.start, cast->message_loc.end);
 
-            // opening
-            argv[3] = cast->opening.type == YP_TOKEN_NOT_PROVIDED ? Qnil : yp_token_new(parser, &cast->opening, encoding);
+            // opening_loc
+            argv[3] = cast->opening_loc.start == NULL ? Qnil : location_new(parser, cast->opening_loc.start, cast->opening_loc.end);
 
             // arguments
             argv[4] = cast->arguments == NULL ? Qnil : yp_node_new(parser, (yp_node_t *) cast->arguments, encoding, constants);
 
-            // closing
-            argv[5] = cast->closing.type == YP_TOKEN_NOT_PROVIDED ? Qnil : yp_token_new(parser, &cast->closing, encoding);
+            // closing_loc
+            argv[5] = cast->closing_loc.start == NULL ? Qnil : location_new(parser, cast->closing_loc.start, cast->closing_loc.end);
 
             // block
             argv[6] = cast->block == NULL ? Qnil : yp_node_new(parser, (yp_node_t *) cast->block, encoding, constants);
 
+            // flags
+            argv[7] = ULONG2NUM(cast->flags);
+
             // name
-            argv[7] = yp_string_new(&cast->name, encoding);
+            argv[8] = yp_string_new(&cast->name, encoding);
 
             // location
-            argv[8] = LONG2FIX(node->location.start - parser->start);
-            argv[9] = LONG2FIX(node->location.end - node->location.start);
+            argv[9] = LONG2FIX(node->location.start - parser->start);
+            argv[10] = LONG2FIX(node->location.end - node->location.start);
 
-            return rb_class_new_instance(10, argv, rb_const_get_at(rb_cYARP, rb_intern("CallNode")));
+            return rb_class_new_instance(11, argv, rb_const_get_at(rb_cYARP, rb_intern("CallNode")));
         }
 #line 36 "api_node.c.erb"
         case YP_NODE_CAPTURE_PATTERN_NODE: {
@@ -1015,8 +1019,8 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             yp_interpolated_symbol_node_t *cast = (yp_interpolated_symbol_node_t *) node;
             VALUE argv[5];
 
-            // opening
-            argv[0] = cast->opening.type == YP_TOKEN_NOT_PROVIDED ? Qnil : yp_token_new(parser, &cast->opening, encoding);
+            // opening_loc
+            argv[0] = cast->opening_loc.start == NULL ? Qnil : location_new(parser, cast->opening_loc.start, cast->opening_loc.end);
 
             // parts
             argv[1] = rb_ary_new();
@@ -1024,8 +1028,8 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
                 rb_ary_push(argv[1], yp_node_new(parser, cast->parts.nodes[index], encoding, constants));
             }
 
-            // closing
-            argv[2] = cast->closing.type == YP_TOKEN_NOT_PROVIDED ? Qnil : yp_token_new(parser, &cast->closing, encoding);
+            // closing_loc
+            argv[2] = cast->closing_loc.start == NULL ? Qnil : location_new(parser, cast->closing_loc.start, cast->closing_loc.end);
 
             // location
             argv[3] = LONG2FIX(node->location.start - parser->start);
@@ -2005,14 +2009,14 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             yp_symbol_node_t *cast = (yp_symbol_node_t *) node;
             VALUE argv[6];
 
-            // opening
-            argv[0] = cast->opening.type == YP_TOKEN_NOT_PROVIDED ? Qnil : yp_token_new(parser, &cast->opening, encoding);
+            // opening_loc
+            argv[0] = cast->opening_loc.start == NULL ? Qnil : location_new(parser, cast->opening_loc.start, cast->opening_loc.end);
 
-            // value
-            argv[1] = yp_token_new(parser, &cast->value, encoding);
+            // value_loc
+            argv[1] = location_new(parser, cast->value_loc.start, cast->value_loc.end);
 
-            // closing
-            argv[2] = cast->closing.type == YP_TOKEN_NOT_PROVIDED ? Qnil : yp_token_new(parser, &cast->closing, encoding);
+            // closing_loc
+            argv[2] = cast->closing_loc.start == NULL ? Qnil : location_new(parser, cast->closing_loc.start, cast->closing_loc.end);
 
             // unescaped
             argv[3] = yp_string_new(&cast->unescaped, encoding);
@@ -2193,7 +2197,7 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
     }
 }
 
-#line 96 "api_node.c.erb"
+#line 97 "api_node.c.erb"
 VALUE yp_ast_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding) {
     ID * constants = calloc(parser->constant_pool.size, sizeof(ID));
 

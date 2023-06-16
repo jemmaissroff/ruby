@@ -229,7 +229,7 @@ prettyprint_node(yp_buffer_t *buffer, yp_parser_t *parser, yp_node_t *node) {
             }
             yp_buffer_append_str(buffer, ", ", 2);            for (uint32_t index = 0; index < ((yp_block_parameters_node_t *)node)->locals.size; index++) {
                 if (index != 0) yp_buffer_append_str(buffer, ", ", 2);
-                prettyprint_token(buffer, &((yp_block_parameters_node_t *)node)->locals.tokens[index]);
+                prettyprint_location(buffer, parser, &((yp_block_parameters_node_t *)node)->locals.locations[index]);
             }
             yp_buffer_append_str(buffer, ", ", 2);            if (((yp_block_parameters_node_t *)node)->opening_loc.start == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
@@ -262,36 +262,39 @@ prettyprint_node(yp_buffer_t *buffer, yp_parser_t *parser, yp_node_t *node) {
             } else {
                 prettyprint_node(buffer, parser, (yp_node_t *)((yp_call_node_t *)node)->receiver);
             }
-            yp_buffer_append_str(buffer, ", ", 2);            if (((yp_call_node_t *)node)->call_operator.type == YP_TOKEN_NOT_PROVIDED) {
+            yp_buffer_append_str(buffer, ", ", 2);            if (((yp_call_node_t *)node)->operator_loc.start == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
             } else {
-                prettyprint_token(buffer, &((yp_call_node_t *)node)->call_operator);
+                prettyprint_location(buffer, parser, &((yp_call_node_t *)node)->operator_loc);
             }
-            yp_buffer_append_str(buffer, ", ", 2);            if (((yp_call_node_t *)node)->message.type == YP_TOKEN_NOT_PROVIDED) {
+            yp_buffer_append_str(buffer, ", ", 2);            if (((yp_call_node_t *)node)->message_loc.start == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
             } else {
-                prettyprint_token(buffer, &((yp_call_node_t *)node)->message);
+                prettyprint_location(buffer, parser, &((yp_call_node_t *)node)->message_loc);
             }
-            yp_buffer_append_str(buffer, ", ", 2);            if (((yp_call_node_t *)node)->opening.type == YP_TOKEN_NOT_PROVIDED) {
+            yp_buffer_append_str(buffer, ", ", 2);            if (((yp_call_node_t *)node)->opening_loc.start == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
             } else {
-                prettyprint_token(buffer, &((yp_call_node_t *)node)->opening);
+                prettyprint_location(buffer, parser, &((yp_call_node_t *)node)->opening_loc);
             }
             yp_buffer_append_str(buffer, ", ", 2);            if (((yp_call_node_t *)node)->arguments == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
             } else {
                 prettyprint_node(buffer, parser, (yp_node_t *)((yp_call_node_t *)node)->arguments);
             }
-            yp_buffer_append_str(buffer, ", ", 2);            if (((yp_call_node_t *)node)->closing.type == YP_TOKEN_NOT_PROVIDED) {
+            yp_buffer_append_str(buffer, ", ", 2);            if (((yp_call_node_t *)node)->closing_loc.start == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
             } else {
-                prettyprint_token(buffer, &((yp_call_node_t *)node)->closing);
+                prettyprint_location(buffer, parser, &((yp_call_node_t *)node)->closing_loc);
             }
             yp_buffer_append_str(buffer, ", ", 2);            if (((yp_call_node_t *)node)->block == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
             } else {
                 prettyprint_node(buffer, parser, (yp_node_t *)((yp_call_node_t *)node)->block);
             }
+            yp_buffer_append_str(buffer, ", ", 2);            char flags_buffer[12];
+            snprintf(flags_buffer, 12, "+%d", ((yp_call_node_t *)node)->flags);
+            yp_buffer_append_str(buffer, flags_buffer, strlen(flags_buffer));
             yp_buffer_append_str(buffer, ", ", 2);            yp_buffer_append_str(buffer, "\"", 1);
             yp_buffer_append_str(buffer, yp_string_source(&((yp_call_node_t *)node)->name), yp_string_length(&((yp_call_node_t *)node)->name));
             yp_buffer_append_str(buffer, "\"", 1);
@@ -756,19 +759,19 @@ prettyprint_node(yp_buffer_t *buffer, yp_parser_t *parser, yp_node_t *node) {
         }
         case YP_NODE_INTERPOLATED_SYMBOL_NODE: {
             yp_buffer_append_str(buffer, "InterpolatedSymbolNode(", 23);
-                        if (((yp_interpolated_symbol_node_t *)node)->opening.type == YP_TOKEN_NOT_PROVIDED) {
+                        if (((yp_interpolated_symbol_node_t *)node)->opening_loc.start == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
             } else {
-                prettyprint_token(buffer, &((yp_interpolated_symbol_node_t *)node)->opening);
+                prettyprint_location(buffer, parser, &((yp_interpolated_symbol_node_t *)node)->opening_loc);
             }
             yp_buffer_append_str(buffer, ", ", 2);            for (uint32_t index = 0; index < ((yp_interpolated_symbol_node_t *)node)->parts.size; index++) {
                 if (index != 0) yp_buffer_append_str(buffer, ", ", 2);
                 prettyprint_node(buffer, parser, (yp_node_t *) ((yp_interpolated_symbol_node_t *) node)->parts.nodes[index]);
             }
-            yp_buffer_append_str(buffer, ", ", 2);            if (((yp_interpolated_symbol_node_t *)node)->closing.type == YP_TOKEN_NOT_PROVIDED) {
+            yp_buffer_append_str(buffer, ", ", 2);            if (((yp_interpolated_symbol_node_t *)node)->closing_loc.start == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
             } else {
-                prettyprint_token(buffer, &((yp_interpolated_symbol_node_t *)node)->closing);
+                prettyprint_location(buffer, parser, &((yp_interpolated_symbol_node_t *)node)->closing_loc);
             }
             yp_buffer_append_str(buffer, ")", 1);
             break;
@@ -1353,16 +1356,16 @@ prettyprint_node(yp_buffer_t *buffer, yp_parser_t *parser, yp_node_t *node) {
         }
         case YP_NODE_SYMBOL_NODE: {
             yp_buffer_append_str(buffer, "SymbolNode(", 11);
-                        if (((yp_symbol_node_t *)node)->opening.type == YP_TOKEN_NOT_PROVIDED) {
+                        if (((yp_symbol_node_t *)node)->opening_loc.start == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
             } else {
-                prettyprint_token(buffer, &((yp_symbol_node_t *)node)->opening);
+                prettyprint_location(buffer, parser, &((yp_symbol_node_t *)node)->opening_loc);
             }
-            yp_buffer_append_str(buffer, ", ", 2);            prettyprint_token(buffer, &((yp_symbol_node_t *)node)->value);
-            yp_buffer_append_str(buffer, ", ", 2);            if (((yp_symbol_node_t *)node)->closing.type == YP_TOKEN_NOT_PROVIDED) {
+            yp_buffer_append_str(buffer, ", ", 2);            prettyprint_location(buffer, parser, &((yp_symbol_node_t *)node)->value_loc);
+            yp_buffer_append_str(buffer, ", ", 2);            if (((yp_symbol_node_t *)node)->closing_loc.start == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
             } else {
-                prettyprint_token(buffer, &((yp_symbol_node_t *)node)->closing);
+                prettyprint_location(buffer, parser, &((yp_symbol_node_t *)node)->closing_loc);
             }
             yp_buffer_append_str(buffer, ", ", 2);            yp_buffer_append_str(buffer, "\"", 1);
             yp_buffer_append_str(buffer, yp_string_source(&((yp_symbol_node_t *)node)->unescaped), yp_string_length(&((yp_symbol_node_t *)node)->unescaped));

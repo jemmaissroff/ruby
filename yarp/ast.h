@@ -188,11 +188,18 @@ typedef struct {
     const char *end;
 } yp_token_t;
 
+// This represents a range of bytes in the source string to which a node or
+// token corresponds.
 typedef struct {
-    yp_token_t *tokens;
+    const char *start;
+    const char *end;
+} yp_location_t;
+
+typedef struct {
+    yp_location_t *locations;
     size_t size;
     size_t capacity;
-} yp_token_list_t;
+} yp_location_list_t;
 
 struct yp_node;
 
@@ -310,13 +317,6 @@ typedef enum {
     YP_NODE_YIELD_NODE = 105,
 } yp_node_type_t;
 
-// This represents a range of bytes in the source string to which a node or
-// token corresponds.
-typedef struct {
-    const char *start;
-    const char *end;
-} yp_location_t;
-
 // This is the overall tagged union representing a node in the syntax tree.
 typedef struct yp_node {
     // This represents the type of the node. It somewhat maps to the nodes that
@@ -431,7 +431,7 @@ typedef struct yp_block_parameter_node {
 typedef struct yp_block_parameters_node {
     yp_node_t base;
     struct yp_parameters_node *parameters;
-    yp_token_list_t locals;
+    yp_location_list_t locals;
     yp_location_t opening_loc;
     yp_location_t closing_loc;
 } yp_block_parameters_node_t;
@@ -447,12 +447,13 @@ typedef struct yp_break_node {
 typedef struct yp_call_node {
     yp_node_t base;
     struct yp_node *receiver;
-    yp_token_t call_operator;
-    yp_token_t message;
-    yp_token_t opening;
+    yp_location_t operator_loc;
+    yp_location_t message_loc;
+    yp_location_t opening_loc;
     struct yp_arguments_node *arguments;
-    yp_token_t closing;
+    yp_location_t closing_loc;
     struct yp_block_node *block;
+    uint32_t flags;
     yp_string_t name;
 } yp_call_node_t;
 
@@ -705,9 +706,9 @@ typedef struct yp_interpolated_string_node {
 // InterpolatedSymbolNode
 typedef struct yp_interpolated_symbol_node {
     yp_node_t base;
-    yp_token_t opening;
+    yp_location_t opening_loc;
     struct yp_node_list parts;
-    yp_token_t closing;
+    yp_location_t closing_loc;
 } yp_interpolated_symbol_node_t;
 
 // InterpolatedXStringNode
@@ -1089,9 +1090,9 @@ typedef struct yp_super_node {
 // SymbolNode
 typedef struct yp_symbol_node {
     yp_node_t base;
-    yp_token_t opening;
-    yp_token_t value;
-    yp_token_t closing;
+    yp_location_t opening_loc;
+    yp_location_t value_loc;
+    yp_location_t closing_loc;
     yp_string_t unescaped;
 } yp_symbol_node_t;
 
@@ -1170,5 +1171,10 @@ typedef enum {
     YP_REGULAR_EXPRESSION_FLAGS_UTF8 = 1 << 6,
     YP_REGULAR_EXPRESSION_FLAGS_ONCE = 1 << 7,
 } yp_regular_expression_flags_t;
+
+// CallNodeFlags
+typedef enum {
+    YP_CALL_NODE_FLAGS_SAFENAVIGATION = 1 << 0,
+} yp_call_node_flags_t;
 
 #endif // YARP_AST_H

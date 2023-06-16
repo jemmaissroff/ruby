@@ -302,11 +302,11 @@ module YARP
         when 12 then
           BlockParameterNode.new(load_optional_location, load_location, start_offset, length)
         when 13 then
-          BlockParametersNode.new(load_optional_node, Array.new(load_varint) { load_token }, load_optional_location, load_optional_location, start_offset, length)
+          BlockParametersNode.new(load_optional_node, Array.new(load_varint) { load_location }, load_optional_location, load_optional_location, start_offset, length)
         when 14 then
           BreakNode.new(load_optional_node, load_location, start_offset, length)
         when 15 then
-          CallNode.new(load_optional_node, load_optional_token, load_optional_token, load_optional_token, load_optional_node, load_optional_token, load_optional_node, load_string, start_offset, length)
+          CallNode.new(load_optional_node, load_optional_location, load_optional_location, load_optional_location, load_optional_node, load_optional_location, load_optional_node, load_varint, load_string, start_offset, length)
         when 16 then
           CapturePatternNode.new(load_node, load_node, load_location, start_offset, length)
         when 17 then
@@ -371,7 +371,7 @@ module YARP
         when 46 then
           InterpolatedStringNode.new(load_optional_location, Array.new(load_varint) { load_node }, load_optional_location, start_offset, length)
         when 47 then
-          InterpolatedSymbolNode.new(load_optional_token, Array.new(load_varint) { load_node }, load_optional_token, start_offset, length)
+          InterpolatedSymbolNode.new(load_optional_location, Array.new(load_varint) { load_node }, load_optional_location, start_offset, length)
         when 48 then
           InterpolatedXStringNode.new(load_location, Array.new(load_varint) { load_node }, load_location, start_offset, length)
         when 49 then
@@ -471,7 +471,7 @@ module YARP
         when 96 then
           SuperNode.new(load_location, load_optional_location, load_optional_node, load_optional_location, load_optional_node, start_offset, length)
         when 97 then
-          SymbolNode.new(load_optional_token, load_token, load_optional_token, load_string, start_offset, length)
+          SymbolNode.new(load_optional_location, load_location, load_optional_location, load_string, start_offset, length)
         when 98 then
           TrueNode.new(start_offset, length)
         when 99 then

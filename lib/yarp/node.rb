@@ -550,7 +550,7 @@ module YARP
     # attr_reader parameters: Node?
     attr_reader :parameters
 
-    # attr_reader locals: Array[Token]
+    # attr_reader locals: Array[Location]
     attr_reader :locals
 
     # attr_reader opening_loc: Location?
@@ -559,7 +559,7 @@ module YARP
     # attr_reader closing_loc: Location?
     attr_reader :closing_loc
 
-    # def initialize: (parameters: Node?, locals: Array[Token], opening_loc: Location?, closing_loc: Location?, start_offset: Integer, length: Integer) -> void
+    # def initialize: (parameters: Node?, locals: Array[Location], opening_loc: Location?, closing_loc: Location?, start_offset: Integer, length: Integer) -> void
     def initialize(parameters, locals, opening_loc, closing_loc, start_offset, length)
       @parameters = parameters
       @locals = locals
@@ -649,36 +649,40 @@ module YARP
     # attr_reader receiver: Node?
     attr_reader :receiver
 
-    # attr_reader call_operator: Token?
-    attr_reader :call_operator
+    # attr_reader operator_loc: Location?
+    attr_reader :operator_loc
 
-    # attr_reader message: Token?
-    attr_reader :message
+    # attr_reader message_loc: Location?
+    attr_reader :message_loc
 
-    # attr_reader opening: Token?
-    attr_reader :opening
+    # attr_reader opening_loc: Location?
+    attr_reader :opening_loc
 
     # attr_reader arguments: Node?
     attr_reader :arguments
 
-    # attr_reader closing: Token?
-    attr_reader :closing
+    # attr_reader closing_loc: Location?
+    attr_reader :closing_loc
 
     # attr_reader block: Node?
     attr_reader :block
 
+    # attr_reader flags: Integer
+    attr_reader :flags
+
     # attr_reader name: String
     attr_reader :name
 
-    # def initialize: (receiver: Node?, call_operator: Token?, message: Token?, opening: Token?, arguments: Node?, closing: Token?, block: Node?, name: String, start_offset: Integer, length: Integer) -> void
-    def initialize(receiver, call_operator, message, opening, arguments, closing, block, name, start_offset, length)
+    # def initialize: (receiver: Node?, operator_loc: Location?, message_loc: Location?, opening_loc: Location?, arguments: Node?, closing_loc: Location?, block: Node?, flags: Integer, name: String, start_offset: Integer, length: Integer) -> void
+    def initialize(receiver, operator_loc, message_loc, opening_loc, arguments, closing_loc, block, flags, name, start_offset, length)
       @receiver = receiver
-      @call_operator = call_operator
-      @message = message
-      @opening = opening
+      @operator_loc = operator_loc
+      @message_loc = message_loc
+      @opening_loc = opening_loc
       @arguments = arguments
-      @closing = closing
+      @closing_loc = closing_loc
       @block = block
+      @flags = flags
       @name = name
       @start_offset = start_offset
       @length = length
@@ -699,7 +703,7 @@ module YARP
 
     # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
     def deconstruct_keys(keys)
-      { receiver: receiver, call_operator: call_operator, message: message, opening: opening, arguments: arguments, closing: closing, block: block, name: name, location: location }
+      { receiver: receiver, operator_loc: operator_loc, message_loc: message_loc, opening_loc: opening_loc, arguments: arguments, closing_loc: closing_loc, block: block, flags: flags, name: name, location: location }
     end
   end
 
@@ -2027,20 +2031,20 @@ module YARP
   #     :"foo #{bar} baz"
   #     ^^^^^^^^^^^^^^^^^
   class InterpolatedSymbolNode < Node
-    # attr_reader opening: Token?
-    attr_reader :opening
+    # attr_reader opening_loc: Location?
+    attr_reader :opening_loc
 
     # attr_reader parts: Array[Node]
     attr_reader :parts
 
-    # attr_reader closing: Token?
-    attr_reader :closing
+    # attr_reader closing_loc: Location?
+    attr_reader :closing_loc
 
-    # def initialize: (opening: Token?, parts: Array[Node], closing: Token?, start_offset: Integer, length: Integer) -> void
-    def initialize(opening, parts, closing, start_offset, length)
-      @opening = opening
+    # def initialize: (opening_loc: Location?, parts: Array[Node], closing_loc: Location?, start_offset: Integer, length: Integer) -> void
+    def initialize(opening_loc, parts, closing_loc, start_offset, length)
+      @opening_loc = opening_loc
       @parts = parts
-      @closing = closing
+      @closing_loc = closing_loc
       @start_offset = start_offset
       @length = length
     end
@@ -2060,7 +2064,7 @@ module YARP
 
     # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
     def deconstruct_keys(keys)
-      { opening: opening, parts: parts, closing: closing, location: location }
+      { opening_loc: opening_loc, parts: parts, closing_loc: closing_loc, location: location }
     end
   end
 
@@ -4093,23 +4097,23 @@ module YARP
   #     %i[foo]
   #        ^^^
   class SymbolNode < Node
-    # attr_reader opening: Token?
-    attr_reader :opening
+    # attr_reader opening_loc: Location?
+    attr_reader :opening_loc
 
-    # attr_reader value: Token
-    attr_reader :value
+    # attr_reader value_loc: Location
+    attr_reader :value_loc
 
-    # attr_reader closing: Token?
-    attr_reader :closing
+    # attr_reader closing_loc: Location?
+    attr_reader :closing_loc
 
     # attr_reader unescaped: String
     attr_reader :unescaped
 
-    # def initialize: (opening: Token?, value: Token, closing: Token?, unescaped: String, start_offset: Integer, length: Integer) -> void
-    def initialize(opening, value, closing, unescaped, start_offset, length)
-      @opening = opening
-      @value = value
-      @closing = closing
+    # def initialize: (opening_loc: Location?, value_loc: Location, closing_loc: Location?, unescaped: String, start_offset: Integer, length: Integer) -> void
+    def initialize(opening_loc, value_loc, closing_loc, unescaped, start_offset, length)
+      @opening_loc = opening_loc
+      @value_loc = value_loc
+      @closing_loc = closing_loc
       @unescaped = unescaped
       @start_offset = start_offset
       @length = length
@@ -4130,7 +4134,7 @@ module YARP
 
     # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
     def deconstruct_keys(keys)
-      { opening: opening, value: value, closing: closing, unescaped: unescaped, location: location }
+      { opening_loc: opening_loc, value_loc: value_loc, closing_loc: closing_loc, unescaped: unescaped, location: location }
     end
   end
 
@@ -4488,6 +4492,10 @@ module YARP
     WINDOWS31J = 1 << 5
     UTF8 = 1 << 6
     ONCE = 1 << 7
+  end
+
+  module CallNodeFlags
+    SAFENAVIGATION = 1 << 0
   end
 
   class Visitor < BasicVisitor
@@ -4886,8 +4894,8 @@ module YARP
     end
 
     # Create a new CallNode node
-    def CallNode(receiver, call_operator, message, opening, arguments, closing, block, name)
-      CallNode.new(receiver, call_operator, message, opening, arguments, closing, block, name, 0, 0)
+    def CallNode(receiver, operator_loc, message_loc, opening_loc, arguments, closing_loc, block, flags, name)
+      CallNode.new(receiver, operator_loc, message_loc, opening_loc, arguments, closing_loc, block, flags, name, 0, 0)
     end
 
     # Create a new CapturePatternNode node
@@ -5046,8 +5054,8 @@ module YARP
     end
 
     # Create a new InterpolatedSymbolNode node
-    def InterpolatedSymbolNode(opening, parts, closing)
-      InterpolatedSymbolNode.new(opening, parts, closing, 0, 0)
+    def InterpolatedSymbolNode(opening_loc, parts, closing_loc)
+      InterpolatedSymbolNode.new(opening_loc, parts, closing_loc, 0, 0)
     end
 
     # Create a new InterpolatedXStringNode node
@@ -5296,8 +5304,8 @@ module YARP
     end
 
     # Create a new SymbolNode node
-    def SymbolNode(opening, value, closing, unescaped)
-      SymbolNode.new(opening, value, closing, unescaped, 0, 0)
+    def SymbolNode(opening_loc, value_loc, closing_loc, unescaped)
+      SymbolNode.new(opening_loc, value_loc, closing_loc, unescaped, 0, 0)
     end
 
     # Create a new TrueNode node
