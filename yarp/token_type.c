@@ -244,8 +244,8 @@ yp_token_type_to_str(yp_token_type_t token_type)
             return "MINUS_GREATER";
         case YP_TOKEN_NEWLINE:
             return "NEWLINE";
-        case YP_TOKEN_NTH_REFERENCE:
-            return "NTH_REFERENCE";
+        case YP_TOKEN_NUMBERED_REFERENCE:
+            return "NUMBERED_REFERENCE";
         case YP_TOKEN_PARENTHESIS_LEFT:
             return "PARENTHESIS_LEFT";
         case YP_TOKEN_PARENTHESIS_LEFT_PARENTHESES:

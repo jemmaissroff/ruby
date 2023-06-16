@@ -140,6 +140,11 @@ prettyprint_node(yp_buffer_t *buffer, yp_parser_t *parser, yp_node_t *node) {
             yp_buffer_append_str(buffer, ")", 1);
             break;
         }
+        case YP_NODE_BACK_REFERENCE_READ_NODE: {
+            yp_buffer_append_str(buffer, "BackReferenceReadNode(", 22);
+            yp_buffer_append_str(buffer, ")", 1);
+            break;
+        }
         case YP_NODE_BEGIN_NODE: {
             yp_buffer_append_str(buffer, "BeginNode(", 10);
                         if (((yp_begin_node_t *)node)->begin_keyword_loc.start == NULL) {
@@ -589,13 +594,12 @@ prettyprint_node(yp_buffer_t *buffer, yp_parser_t *parser, yp_node_t *node) {
         }
         case YP_NODE_GLOBAL_VARIABLE_READ_NODE: {
             yp_buffer_append_str(buffer, "GlobalVariableReadNode(", 23);
-                        prettyprint_token(buffer, &((yp_global_variable_read_node_t *)node)->name);
             yp_buffer_append_str(buffer, ")", 1);
             break;
         }
         case YP_NODE_GLOBAL_VARIABLE_WRITE_NODE: {
             yp_buffer_append_str(buffer, "GlobalVariableWriteNode(", 24);
-                        prettyprint_token(buffer, &((yp_global_variable_write_node_t *)node)->name);
+                        prettyprint_location(buffer, parser, &((yp_global_variable_write_node_t *)node)->name_loc);
             yp_buffer_append_str(buffer, ", ", 2);            if (((yp_global_variable_write_node_t *)node)->operator_loc.start == NULL) {
                 yp_buffer_append_str(buffer, "nil", 3);
             } else {
@@ -962,6 +966,11 @@ prettyprint_node(yp_buffer_t *buffer, yp_parser_t *parser, yp_node_t *node) {
             yp_buffer_append_str(buffer, "NoKeywordsParameterNode(", 24);
                         prettyprint_location(buffer, parser, &((yp_no_keywords_parameter_node_t *)node)->operator_loc);
             yp_buffer_append_str(buffer, ", ", 2);            prettyprint_location(buffer, parser, &((yp_no_keywords_parameter_node_t *)node)->keyword_loc);
+            yp_buffer_append_str(buffer, ")", 1);
+            break;
+        }
+        case YP_NODE_NUMBERED_REFERENCE_READ_NODE: {
+            yp_buffer_append_str(buffer, "NumberedReferenceReadNode(", 26);
             yp_buffer_append_str(buffer, ")", 1);
             break;
         }

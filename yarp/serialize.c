@@ -158,6 +158,9 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             serialize_location(parser, &((yp_assoc_splat_node_t *)node)->operator_loc, buffer);
             break;
         }
+        case YP_NODE_BACK_REFERENCE_READ_NODE: {
+            break;
+        }
         case YP_NODE_BEGIN_NODE: {
             if (((yp_begin_node_t *)node)->begin_keyword_loc.start == NULL) {
                 yp_buffer_append_u8(buffer, 0);
@@ -582,11 +585,10 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             break;
         }
         case YP_NODE_GLOBAL_VARIABLE_READ_NODE: {
-            serialize_token(parser, &((yp_global_variable_read_node_t *)node)->name, buffer);
             break;
         }
         case YP_NODE_GLOBAL_VARIABLE_WRITE_NODE: {
-            serialize_token(parser, &((yp_global_variable_write_node_t *)node)->name, buffer);
+            serialize_location(parser, &((yp_global_variable_write_node_t *)node)->name_loc, buffer);
             if (((yp_global_variable_write_node_t *)node)->operator_loc.start == NULL) {
                 yp_buffer_append_u8(buffer, 0);
             } else {
@@ -913,6 +915,9 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
         case YP_NODE_NO_KEYWORDS_PARAMETER_NODE: {
             serialize_location(parser, &((yp_no_keywords_parameter_node_t *)node)->operator_loc, buffer);
             serialize_location(parser, &((yp_no_keywords_parameter_node_t *)node)->keyword_loc, buffer);
+            break;
+        }
+        case YP_NODE_NUMBERED_REFERENCE_READ_NODE: {
             break;
         }
         case YP_NODE_OPERATOR_AND_ASSIGNMENT_NODE: {

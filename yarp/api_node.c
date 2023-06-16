@@ -211,6 +211,16 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             return rb_class_new_instance(4, argv, rb_const_get_at(rb_cYARP, rb_intern("AssocSplatNode")));
         }
 #line 36 "api_node.c.erb"
+        case YP_NODE_BACK_REFERENCE_READ_NODE: {
+            VALUE argv[2];
+
+            // location
+            argv[0] = LONG2FIX(node->location.start - parser->start);
+            argv[1] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(2, argv, rb_const_get_at(rb_cYARP, rb_intern("BackReferenceReadNode")));
+        }
+#line 36 "api_node.c.erb"
         case YP_NODE_BEGIN_NODE: {
             yp_begin_node_t *cast = (yp_begin_node_t *) node;
             VALUE argv[8];
@@ -778,25 +788,21 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
         }
 #line 36 "api_node.c.erb"
         case YP_NODE_GLOBAL_VARIABLE_READ_NODE: {
-            yp_global_variable_read_node_t *cast = (yp_global_variable_read_node_t *) node;
-            VALUE argv[3];
-
-            // name
-            argv[0] = yp_token_new(parser, &cast->name, encoding);
+            VALUE argv[2];
 
             // location
-            argv[1] = LONG2FIX(node->location.start - parser->start);
-            argv[2] = LONG2FIX(node->location.end - node->location.start);
+            argv[0] = LONG2FIX(node->location.start - parser->start);
+            argv[1] = LONG2FIX(node->location.end - node->location.start);
 
-            return rb_class_new_instance(3, argv, rb_const_get_at(rb_cYARP, rb_intern("GlobalVariableReadNode")));
+            return rb_class_new_instance(2, argv, rb_const_get_at(rb_cYARP, rb_intern("GlobalVariableReadNode")));
         }
 #line 36 "api_node.c.erb"
         case YP_NODE_GLOBAL_VARIABLE_WRITE_NODE: {
             yp_global_variable_write_node_t *cast = (yp_global_variable_write_node_t *) node;
             VALUE argv[5];
 
-            // name
-            argv[0] = yp_token_new(parser, &cast->name, encoding);
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
 
             // operator_loc
             argv[1] = cast->operator_loc.start == NULL ? Qnil : location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
@@ -1331,6 +1337,16 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             argv[3] = LONG2FIX(node->location.end - node->location.start);
 
             return rb_class_new_instance(4, argv, rb_const_get_at(rb_cYARP, rb_intern("NoKeywordsParameterNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_NUMBERED_REFERENCE_READ_NODE: {
+            VALUE argv[2];
+
+            // location
+            argv[0] = LONG2FIX(node->location.start - parser->start);
+            argv[1] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(2, argv, rb_const_get_at(rb_cYARP, rb_intern("NumberedReferenceReadNode")));
         }
 #line 36 "api_node.c.erb"
         case YP_NODE_OPERATOR_AND_ASSIGNMENT_NODE: {

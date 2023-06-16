@@ -45,6 +45,15 @@ source_file_load(source_t *source, VALUE ruby_filepath) {
         return 1;
     }
 
+    // If the file is empty, then we don't need to do anything else, we'll set
+    // the source to a constant empty string and return.
+    if (!file_size) {
+        CloseHandle(file);
+        source->size = 0;
+        source->source = "";
+        return 0;
+    }
+
     // Create a mapping of the file.
     HANDLE mapping = CreateFileMapping(file, NULL, PAGE_READONLY, 0, 0, NULL);
     if (mapping == NULL) {

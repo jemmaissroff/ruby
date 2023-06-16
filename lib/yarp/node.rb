@@ -355,6 +355,36 @@ module YARP
     end
   end
 
+  # Represents reading a reference to a field in the previous match.
+  #
+  #     $'
+  #     ^^
+  class BackReferenceReadNode < Node
+    # def initialize: (start_offset: Integer, length: Integer) -> void
+    def initialize(start_offset, length)
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_back_reference_read_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      []
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { location: location }
+    end
+  end
+
   # Represents a begin statement.
   #
   #     begin
@@ -1537,12 +1567,8 @@ module YARP
   #     $foo
   #     ^^^^
   class GlobalVariableReadNode < Node
-    # attr_reader name: Token
-    attr_reader :name
-
-    # def initialize: (name: Token, start_offset: Integer, length: Integer) -> void
-    def initialize(name, start_offset, length)
-      @name = name
+    # def initialize: (start_offset: Integer, length: Integer) -> void
+    def initialize(start_offset, length)
       @start_offset = start_offset
       @length = length
     end
@@ -1562,7 +1588,7 @@ module YARP
 
     # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
     def deconstruct_keys(keys)
-      { name: name, location: location }
+      { location: location }
     end
   end
 
@@ -1571,8 +1597,8 @@ module YARP
   #     $foo = 1
   #     ^^^^^^^^
   class GlobalVariableWriteNode < Node
-    # attr_reader name: Token
-    attr_reader :name
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
 
     # attr_reader operator_loc: Location?
     attr_reader :operator_loc
@@ -1580,9 +1606,9 @@ module YARP
     # attr_reader value: Node?
     attr_reader :value
 
-    # def initialize: (name: Token, operator_loc: Location?, value: Node?, start_offset: Integer, length: Integer) -> void
-    def initialize(name, operator_loc, value, start_offset, length)
-      @name = name
+    # def initialize: (name_loc: Location, operator_loc: Location?, value: Node?, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, start_offset, length)
+      @name_loc = name_loc
       @operator_loc = operator_loc
       @value = value
       @start_offset = start_offset
@@ -1604,7 +1630,7 @@ module YARP
 
     # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
     def deconstruct_keys(keys)
-      { name: name, operator_loc: operator_loc, value: value, location: location }
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, location: location }
     end
   end
 
@@ -2678,6 +2704,36 @@ module YARP
     # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
     def deconstruct_keys(keys)
       { operator_loc: operator_loc, keyword_loc: keyword_loc, location: location }
+    end
+  end
+
+  # Represents reading a numbered reference to a capture in the previous match.
+  #
+  #     $1
+  #     ^^
+  class NumberedReferenceReadNode < Node
+    # def initialize: (start_offset: Integer, length: Integer) -> void
+    def initialize(start_offset, length)
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_numbered_reference_read_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      []
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { location: location }
     end
   end
 
@@ -4523,6 +4579,9 @@ module YARP
     # Visit a AssocSplatNode node
     alias visit_assoc_splat_node visit_child_nodes
 
+    # Visit a BackReferenceReadNode node
+    alias visit_back_reference_read_node visit_child_nodes
+
     # Visit a BeginNode node
     alias visit_begin_node visit_child_nodes
 
@@ -4684,6 +4743,9 @@ module YARP
 
     # Visit a NoKeywordsParameterNode node
     alias visit_no_keywords_parameter_node visit_child_nodes
+
+    # Visit a NumberedReferenceReadNode node
+    alias visit_numbered_reference_read_node visit_child_nodes
 
     # Visit a OperatorAndAssignmentNode node
     alias visit_operator_and_assignment_node visit_child_nodes
@@ -4863,6 +4925,11 @@ module YARP
       AssocSplatNode.new(value, operator_loc, 0, 0)
     end
 
+    # Create a new BackReferenceReadNode node
+    def BackReferenceReadNode()
+      BackReferenceReadNode.new(0, 0)
+    end
+
     # Create a new BeginNode node
     def BeginNode(begin_keyword_loc, statements, rescue_clause, else_clause, ensure_clause, end_keyword_loc)
       BeginNode.new(begin_keyword_loc, statements, rescue_clause, else_clause, ensure_clause, end_keyword_loc, 0, 0)
@@ -4994,13 +5061,13 @@ module YARP
     end
 
     # Create a new GlobalVariableReadNode node
-    def GlobalVariableReadNode(name)
-      GlobalVariableReadNode.new(name, 0, 0)
+    def GlobalVariableReadNode()
+      GlobalVariableReadNode.new(0, 0)
     end
 
     # Create a new GlobalVariableWriteNode node
-    def GlobalVariableWriteNode(name, operator_loc, value)
-      GlobalVariableWriteNode.new(name, operator_loc, value, 0, 0)
+    def GlobalVariableWriteNode(name_loc, operator_loc, value)
+      GlobalVariableWriteNode.new(name_loc, operator_loc, value, 0, 0)
     end
 
     # Create a new HashNode node
@@ -5131,6 +5198,11 @@ module YARP
     # Create a new NoKeywordsParameterNode node
     def NoKeywordsParameterNode(operator_loc, keyword_loc)
       NoKeywordsParameterNode.new(operator_loc, keyword_loc, 0, 0)
+    end
+
+    # Create a new NumberedReferenceReadNode node
+    def NumberedReferenceReadNode()
+      NumberedReferenceReadNode.new(0, 0)
     end
 
     # Create a new OperatorAndAssignmentNode node
@@ -5923,9 +5995,9 @@ module YARP
       Token.new(:NEWLINE, value, location.start_offset, location.length)
     end
 
-    # Create a new NTH_REFERENCE token
-    def NTH_REFERENCE(value, location = Location.null)
-      Token.new(:NTH_REFERENCE, value, location.start_offset, location.length)
+    # Create a new NUMBERED_REFERENCE token
+    def NUMBERED_REFERENCE(value, location = Location.null)
+      Token.new(:NUMBERED_REFERENCE, value, location.start_offset, location.length)
     end
 
     # Create a new PARENTHESIS_LEFT token
