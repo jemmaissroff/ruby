@@ -39,7 +39,7 @@ source_file_load(source_t *source, VALUE ruby_filepath) {
 
     // Get the file size.
     DWORD file_size = GetFileSize(file, NULL);
-    if (file_size_dw == INVALID_FILE_SIZE) {
+    if (file_size == INVALID_FILE_SIZE) {
         CloseHandle(file);
         perror("GetFileSize failed");
         return 1;
@@ -64,7 +64,7 @@ source_file_load(source_t *source, VALUE ruby_filepath) {
     }
 
     // Set the size of the source.
-    source->size = (size_t) file_size_dw;
+    source->size = (size_t) file_size;
 #else
     // Open the file for reading.
     int fd = open(filepath, O_RDONLY);
