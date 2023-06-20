@@ -24,17 +24,6 @@ yp_ulong_to_u32(unsigned long value) {
 }
 
 static void
-serialize_token(yp_parser_t *parser, yp_token_t *token, yp_buffer_t *buffer) {
-    assert(token->start);
-    assert(token->end);
-    assert(token->start <= token->end);
-
-    yp_buffer_append_u8(buffer, token->type);
-    yp_buffer_append_u32(buffer, yp_long_to_u32(token->start - parser->start));
-    yp_buffer_append_u32(buffer, yp_long_to_u32(token->end - token->start));
-}
-
-static void
 serialize_location(yp_parser_t *parser, yp_location_t *location, yp_buffer_t *buffer) {
     assert(location->start);
     assert(location->end);
@@ -315,6 +304,25 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             yp_buffer_append_str(buffer, yp_string_source(&((yp_call_node_t *)node)->name), name_length);
             break;
         }
+        case YP_NODE_CALL_OPERATOR_AND_WRITE_NODE: {
+            yp_serialize_node(parser, (yp_node_t *)((yp_call_operator_and_write_node_t *)node)->target, buffer);
+            serialize_location(parser, &((yp_call_operator_and_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_call_operator_and_write_node_t *)node)->value, buffer);
+            break;
+        }
+        case YP_NODE_CALL_OPERATOR_OR_WRITE_NODE: {
+            yp_serialize_node(parser, (yp_node_t *)((yp_call_operator_or_write_node_t *)node)->target, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_call_operator_or_write_node_t *)node)->value, buffer);
+            serialize_location(parser, &((yp_call_operator_or_write_node_t *)node)->operator_loc, buffer);
+            break;
+        }
+        case YP_NODE_CALL_OPERATOR_WRITE_NODE: {
+            yp_serialize_node(parser, (yp_node_t *)((yp_call_operator_write_node_t *)node)->target, buffer);
+            serialize_location(parser, &((yp_call_operator_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_call_operator_write_node_t *)node)->value, buffer);
+            yp_buffer_append_u32(buffer, yp_ulong_to_u32(((yp_call_operator_write_node_t *)node)->operator_id));
+            break;
+        }
         case YP_NODE_CAPTURE_PATTERN_NODE: {
             yp_serialize_node(parser, (yp_node_t *)((yp_capture_pattern_node_t *)node)->value, buffer);
             yp_serialize_node(parser, (yp_node_t *)((yp_capture_pattern_node_t *)node)->target, buffer);
@@ -368,6 +376,25 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             serialize_location(parser, &((yp_class_node_t *)node)->end_keyword_loc, buffer);
             break;
         }
+        case YP_NODE_CLASS_VARIABLE_OPERATOR_AND_WRITE_NODE: {
+            serialize_location(parser, &((yp_class_variable_operator_and_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_class_variable_operator_and_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_class_variable_operator_and_write_node_t *)node)->value, buffer);
+            break;
+        }
+        case YP_NODE_CLASS_VARIABLE_OPERATOR_OR_WRITE_NODE: {
+            serialize_location(parser, &((yp_class_variable_operator_or_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_class_variable_operator_or_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_class_variable_operator_or_write_node_t *)node)->value, buffer);
+            break;
+        }
+        case YP_NODE_CLASS_VARIABLE_OPERATOR_WRITE_NODE: {
+            serialize_location(parser, &((yp_class_variable_operator_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_class_variable_operator_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_class_variable_operator_write_node_t *)node)->value, buffer);
+            yp_buffer_append_u32(buffer, yp_ulong_to_u32(((yp_class_variable_operator_write_node_t *)node)->operator));
+            break;
+        }
         case YP_NODE_CLASS_VARIABLE_READ_NODE: {
             break;
         }
@@ -386,6 +413,25 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             }
             break;
         }
+        case YP_NODE_CONSTANT_OPERATOR_AND_WRITE_NODE: {
+            serialize_location(parser, &((yp_constant_operator_and_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_constant_operator_and_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_constant_operator_and_write_node_t *)node)->value, buffer);
+            break;
+        }
+        case YP_NODE_CONSTANT_OPERATOR_OR_WRITE_NODE: {
+            serialize_location(parser, &((yp_constant_operator_or_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_constant_operator_or_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_constant_operator_or_write_node_t *)node)->value, buffer);
+            break;
+        }
+        case YP_NODE_CONSTANT_OPERATOR_WRITE_NODE: {
+            serialize_location(parser, &((yp_constant_operator_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_constant_operator_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_constant_operator_write_node_t *)node)->value, buffer);
+            yp_buffer_append_u32(buffer, yp_ulong_to_u32(((yp_constant_operator_write_node_t *)node)->operator));
+            break;
+        }
         case YP_NODE_CONSTANT_PATH_NODE: {
             if (((yp_constant_path_node_t *)node)->parent == NULL) {
                 yp_buffer_append_u8(buffer, 0);
@@ -394,6 +440,25 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             }
             yp_serialize_node(parser, (yp_node_t *)((yp_constant_path_node_t *)node)->child, buffer);
             serialize_location(parser, &((yp_constant_path_node_t *)node)->delimiter_loc, buffer);
+            break;
+        }
+        case YP_NODE_CONSTANT_PATH_OPERATOR_AND_WRITE_NODE: {
+            yp_serialize_node(parser, (yp_node_t *)((yp_constant_path_operator_and_write_node_t *)node)->target, buffer);
+            serialize_location(parser, &((yp_constant_path_operator_and_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_constant_path_operator_and_write_node_t *)node)->value, buffer);
+            break;
+        }
+        case YP_NODE_CONSTANT_PATH_OPERATOR_OR_WRITE_NODE: {
+            yp_serialize_node(parser, (yp_node_t *)((yp_constant_path_operator_or_write_node_t *)node)->target, buffer);
+            serialize_location(parser, &((yp_constant_path_operator_or_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_constant_path_operator_or_write_node_t *)node)->value, buffer);
+            break;
+        }
+        case YP_NODE_CONSTANT_PATH_OPERATOR_WRITE_NODE: {
+            yp_serialize_node(parser, (yp_node_t *)((yp_constant_path_operator_write_node_t *)node)->target, buffer);
+            serialize_location(parser, &((yp_constant_path_operator_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_constant_path_operator_write_node_t *)node)->value, buffer);
+            yp_buffer_append_u32(buffer, yp_ulong_to_u32(((yp_constant_path_operator_write_node_t *)node)->operator));
             break;
         }
         case YP_NODE_CONSTANT_PATH_WRITE_NODE: {
@@ -584,6 +649,25 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             }
             break;
         }
+        case YP_NODE_GLOBAL_VARIABLE_OPERATOR_AND_WRITE_NODE: {
+            serialize_location(parser, &((yp_global_variable_operator_and_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_global_variable_operator_and_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_global_variable_operator_and_write_node_t *)node)->value, buffer);
+            break;
+        }
+        case YP_NODE_GLOBAL_VARIABLE_OPERATOR_OR_WRITE_NODE: {
+            serialize_location(parser, &((yp_global_variable_operator_or_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_global_variable_operator_or_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_global_variable_operator_or_write_node_t *)node)->value, buffer);
+            break;
+        }
+        case YP_NODE_GLOBAL_VARIABLE_OPERATOR_WRITE_NODE: {
+            serialize_location(parser, &((yp_global_variable_operator_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_global_variable_operator_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_global_variable_operator_write_node_t *)node)->value, buffer);
+            yp_buffer_append_u32(buffer, yp_ulong_to_u32(((yp_global_variable_operator_write_node_t *)node)->operator));
+            break;
+        }
         case YP_NODE_GLOBAL_VARIABLE_READ_NODE: {
             break;
         }
@@ -686,6 +770,25 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
                 yp_buffer_append_u8(buffer, 1);
                 serialize_location(parser, &((yp_in_node_t *)node)->then_loc, buffer);
             }
+            break;
+        }
+        case YP_NODE_INSTANCE_VARIABLE_OPERATOR_AND_WRITE_NODE: {
+            serialize_location(parser, &((yp_instance_variable_operator_and_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_instance_variable_operator_and_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_instance_variable_operator_and_write_node_t *)node)->value, buffer);
+            break;
+        }
+        case YP_NODE_INSTANCE_VARIABLE_OPERATOR_OR_WRITE_NODE: {
+            serialize_location(parser, &((yp_instance_variable_operator_or_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_instance_variable_operator_or_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_instance_variable_operator_or_write_node_t *)node)->value, buffer);
+            break;
+        }
+        case YP_NODE_INSTANCE_VARIABLE_OPERATOR_WRITE_NODE: {
+            serialize_location(parser, &((yp_instance_variable_operator_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_instance_variable_operator_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_instance_variable_operator_write_node_t *)node)->value, buffer);
+            yp_buffer_append_u32(buffer, yp_ulong_to_u32(((yp_instance_variable_operator_write_node_t *)node)->operator));
             break;
         }
         case YP_NODE_INSTANCE_VARIABLE_READ_NODE: {
@@ -816,6 +919,28 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             }
             break;
         }
+        case YP_NODE_LOCAL_VARIABLE_OPERATOR_AND_WRITE_NODE: {
+            serialize_location(parser, &((yp_local_variable_operator_and_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_local_variable_operator_and_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_local_variable_operator_and_write_node_t *)node)->value, buffer);
+            yp_buffer_append_u32(buffer, yp_ulong_to_u32(((yp_local_variable_operator_and_write_node_t *)node)->constant_id));
+            break;
+        }
+        case YP_NODE_LOCAL_VARIABLE_OPERATOR_OR_WRITE_NODE: {
+            serialize_location(parser, &((yp_local_variable_operator_or_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_local_variable_operator_or_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_local_variable_operator_or_write_node_t *)node)->value, buffer);
+            yp_buffer_append_u32(buffer, yp_ulong_to_u32(((yp_local_variable_operator_or_write_node_t *)node)->constant_id));
+            break;
+        }
+        case YP_NODE_LOCAL_VARIABLE_OPERATOR_WRITE_NODE: {
+            serialize_location(parser, &((yp_local_variable_operator_write_node_t *)node)->name_loc, buffer);
+            serialize_location(parser, &((yp_local_variable_operator_write_node_t *)node)->operator_loc, buffer);
+            yp_serialize_node(parser, (yp_node_t *)((yp_local_variable_operator_write_node_t *)node)->value, buffer);
+            yp_buffer_append_u32(buffer, yp_ulong_to_u32(((yp_local_variable_operator_write_node_t *)node)->constant_id));
+            yp_buffer_append_u32(buffer, yp_ulong_to_u32(((yp_local_variable_operator_write_node_t *)node)->operator_id));
+            break;
+        }
         case YP_NODE_LOCAL_VARIABLE_READ_NODE: {
             yp_buffer_append_u32(buffer, yp_ulong_to_u32(((yp_local_variable_read_node_t *)node)->constant_id));
             yp_buffer_append_u32(buffer, ((yp_local_variable_read_node_t *)node)->depth);
@@ -918,24 +1043,6 @@ yp_serialize_node(yp_parser_t *parser, yp_node_t *node, yp_buffer_t *buffer) {
             break;
         }
         case YP_NODE_NUMBERED_REFERENCE_READ_NODE: {
-            break;
-        }
-        case YP_NODE_OPERATOR_AND_ASSIGNMENT_NODE: {
-            yp_serialize_node(parser, (yp_node_t *)((yp_operator_and_assignment_node_t *)node)->target, buffer);
-            yp_serialize_node(parser, (yp_node_t *)((yp_operator_and_assignment_node_t *)node)->value, buffer);
-            serialize_location(parser, &((yp_operator_and_assignment_node_t *)node)->operator_loc, buffer);
-            break;
-        }
-        case YP_NODE_OPERATOR_ASSIGNMENT_NODE: {
-            yp_serialize_node(parser, (yp_node_t *)((yp_operator_assignment_node_t *)node)->target, buffer);
-            serialize_token(parser, &((yp_operator_assignment_node_t *)node)->operator, buffer);
-            yp_serialize_node(parser, (yp_node_t *)((yp_operator_assignment_node_t *)node)->value, buffer);
-            break;
-        }
-        case YP_NODE_OPERATOR_OR_ASSIGNMENT_NODE: {
-            yp_serialize_node(parser, (yp_node_t *)((yp_operator_or_assignment_node_t *)node)->target, buffer);
-            yp_serialize_node(parser, (yp_node_t *)((yp_operator_or_assignment_node_t *)node)->value, buffer);
-            serialize_location(parser, &((yp_operator_or_assignment_node_t *)node)->operator_loc, buffer);
             break;
         }
         case YP_NODE_OPTIONAL_PARAMETER_NODE: {

@@ -395,6 +395,69 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             return rb_class_new_instance(11, argv, rb_const_get_at(rb_cYARP, rb_intern("CallNode")));
         }
 #line 36 "api_node.c.erb"
+        case YP_NODE_CALL_OPERATOR_AND_WRITE_NODE: {
+            yp_call_operator_and_write_node_t *cast = (yp_call_operator_and_write_node_t *) node;
+            VALUE argv[5];
+
+            // target
+            argv[0] = yp_node_new(parser, (yp_node_t *) cast->target, encoding, constants);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // location
+            argv[3] = LONG2FIX(node->location.start - parser->start);
+            argv[4] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("CallOperatorAndWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_CALL_OPERATOR_OR_WRITE_NODE: {
+            yp_call_operator_or_write_node_t *cast = (yp_call_operator_or_write_node_t *) node;
+            VALUE argv[5];
+
+            // target
+            argv[0] = yp_node_new(parser, (yp_node_t *) cast->target, encoding, constants);
+
+            // value
+            argv[1] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // operator_loc
+            argv[2] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // location
+            argv[3] = LONG2FIX(node->location.start - parser->start);
+            argv[4] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("CallOperatorOrWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_CALL_OPERATOR_WRITE_NODE: {
+            yp_call_operator_write_node_t *cast = (yp_call_operator_write_node_t *) node;
+            VALUE argv[6];
+
+            // target
+            argv[0] = yp_node_new(parser, (yp_node_t *) cast->target, encoding, constants);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // operator_id
+            argv[3] = rb_id2sym(constants[cast->operator_id - 1]);
+
+            // location
+            argv[4] = LONG2FIX(node->location.start - parser->start);
+            argv[5] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(6, argv, rb_const_get_at(rb_cYARP, rb_intern("CallOperatorWriteNode")));
+        }
+#line 36 "api_node.c.erb"
         case YP_NODE_CAPTURE_PATTERN_NODE: {
             yp_capture_pattern_node_t *cast = (yp_capture_pattern_node_t *) node;
             VALUE argv[5];
@@ -479,6 +542,69 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             return rb_class_new_instance(9, argv, rb_const_get_at(rb_cYARP, rb_intern("ClassNode")));
         }
 #line 36 "api_node.c.erb"
+        case YP_NODE_CLASS_VARIABLE_OPERATOR_AND_WRITE_NODE: {
+            yp_class_variable_operator_and_write_node_t *cast = (yp_class_variable_operator_and_write_node_t *) node;
+            VALUE argv[5];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // location
+            argv[3] = LONG2FIX(node->location.start - parser->start);
+            argv[4] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("ClassVariableOperatorAndWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_CLASS_VARIABLE_OPERATOR_OR_WRITE_NODE: {
+            yp_class_variable_operator_or_write_node_t *cast = (yp_class_variable_operator_or_write_node_t *) node;
+            VALUE argv[5];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // location
+            argv[3] = LONG2FIX(node->location.start - parser->start);
+            argv[4] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("ClassVariableOperatorOrWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_CLASS_VARIABLE_OPERATOR_WRITE_NODE: {
+            yp_class_variable_operator_write_node_t *cast = (yp_class_variable_operator_write_node_t *) node;
+            VALUE argv[6];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // operator
+            argv[3] = rb_id2sym(constants[cast->operator - 1]);
+
+            // location
+            argv[4] = LONG2FIX(node->location.start - parser->start);
+            argv[5] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(6, argv, rb_const_get_at(rb_cYARP, rb_intern("ClassVariableOperatorWriteNode")));
+        }
+#line 36 "api_node.c.erb"
         case YP_NODE_CLASS_VARIABLE_READ_NODE: {
             VALUE argv[2];
 
@@ -509,6 +635,69 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("ClassVariableWriteNode")));
         }
 #line 36 "api_node.c.erb"
+        case YP_NODE_CONSTANT_OPERATOR_AND_WRITE_NODE: {
+            yp_constant_operator_and_write_node_t *cast = (yp_constant_operator_and_write_node_t *) node;
+            VALUE argv[5];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // location
+            argv[3] = LONG2FIX(node->location.start - parser->start);
+            argv[4] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("ConstantOperatorAndWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_CONSTANT_OPERATOR_OR_WRITE_NODE: {
+            yp_constant_operator_or_write_node_t *cast = (yp_constant_operator_or_write_node_t *) node;
+            VALUE argv[5];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // location
+            argv[3] = LONG2FIX(node->location.start - parser->start);
+            argv[4] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("ConstantOperatorOrWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_CONSTANT_OPERATOR_WRITE_NODE: {
+            yp_constant_operator_write_node_t *cast = (yp_constant_operator_write_node_t *) node;
+            VALUE argv[6];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // operator
+            argv[3] = rb_id2sym(constants[cast->operator - 1]);
+
+            // location
+            argv[4] = LONG2FIX(node->location.start - parser->start);
+            argv[5] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(6, argv, rb_const_get_at(rb_cYARP, rb_intern("ConstantOperatorWriteNode")));
+        }
+#line 36 "api_node.c.erb"
         case YP_NODE_CONSTANT_PATH_NODE: {
             yp_constant_path_node_t *cast = (yp_constant_path_node_t *) node;
             VALUE argv[5];
@@ -527,6 +716,69 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             argv[4] = LONG2FIX(node->location.end - node->location.start);
 
             return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("ConstantPathNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_CONSTANT_PATH_OPERATOR_AND_WRITE_NODE: {
+            yp_constant_path_operator_and_write_node_t *cast = (yp_constant_path_operator_and_write_node_t *) node;
+            VALUE argv[5];
+
+            // target
+            argv[0] = yp_node_new(parser, (yp_node_t *) cast->target, encoding, constants);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // location
+            argv[3] = LONG2FIX(node->location.start - parser->start);
+            argv[4] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("ConstantPathOperatorAndWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_CONSTANT_PATH_OPERATOR_OR_WRITE_NODE: {
+            yp_constant_path_operator_or_write_node_t *cast = (yp_constant_path_operator_or_write_node_t *) node;
+            VALUE argv[5];
+
+            // target
+            argv[0] = yp_node_new(parser, (yp_node_t *) cast->target, encoding, constants);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // location
+            argv[3] = LONG2FIX(node->location.start - parser->start);
+            argv[4] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("ConstantPathOperatorOrWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_CONSTANT_PATH_OPERATOR_WRITE_NODE: {
+            yp_constant_path_operator_write_node_t *cast = (yp_constant_path_operator_write_node_t *) node;
+            VALUE argv[6];
+
+            // target
+            argv[0] = yp_node_new(parser, (yp_node_t *) cast->target, encoding, constants);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // operator
+            argv[3] = rb_id2sym(constants[cast->operator - 1]);
+
+            // location
+            argv[4] = LONG2FIX(node->location.start - parser->start);
+            argv[5] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(6, argv, rb_const_get_at(rb_cYARP, rb_intern("ConstantPathOperatorWriteNode")));
         }
 #line 36 "api_node.c.erb"
         case YP_NODE_CONSTANT_PATH_WRITE_NODE: {
@@ -787,6 +1039,69 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             return rb_class_new_instance(3, argv, rb_const_get_at(rb_cYARP, rb_intern("ForwardingSuperNode")));
         }
 #line 36 "api_node.c.erb"
+        case YP_NODE_GLOBAL_VARIABLE_OPERATOR_AND_WRITE_NODE: {
+            yp_global_variable_operator_and_write_node_t *cast = (yp_global_variable_operator_and_write_node_t *) node;
+            VALUE argv[5];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // location
+            argv[3] = LONG2FIX(node->location.start - parser->start);
+            argv[4] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("GlobalVariableOperatorAndWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_GLOBAL_VARIABLE_OPERATOR_OR_WRITE_NODE: {
+            yp_global_variable_operator_or_write_node_t *cast = (yp_global_variable_operator_or_write_node_t *) node;
+            VALUE argv[5];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // location
+            argv[3] = LONG2FIX(node->location.start - parser->start);
+            argv[4] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("GlobalVariableOperatorOrWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_GLOBAL_VARIABLE_OPERATOR_WRITE_NODE: {
+            yp_global_variable_operator_write_node_t *cast = (yp_global_variable_operator_write_node_t *) node;
+            VALUE argv[6];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // operator
+            argv[3] = rb_id2sym(constants[cast->operator - 1]);
+
+            // location
+            argv[4] = LONG2FIX(node->location.start - parser->start);
+            argv[5] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(6, argv, rb_const_get_at(rb_cYARP, rb_intern("GlobalVariableOperatorWriteNode")));
+        }
+#line 36 "api_node.c.erb"
         case YP_NODE_GLOBAL_VARIABLE_READ_NODE: {
             VALUE argv[2];
 
@@ -930,6 +1245,69 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             argv[5] = LONG2FIX(node->location.end - node->location.start);
 
             return rb_class_new_instance(6, argv, rb_const_get_at(rb_cYARP, rb_intern("InNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_INSTANCE_VARIABLE_OPERATOR_AND_WRITE_NODE: {
+            yp_instance_variable_operator_and_write_node_t *cast = (yp_instance_variable_operator_and_write_node_t *) node;
+            VALUE argv[5];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // location
+            argv[3] = LONG2FIX(node->location.start - parser->start);
+            argv[4] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("InstanceVariableOperatorAndWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_INSTANCE_VARIABLE_OPERATOR_OR_WRITE_NODE: {
+            yp_instance_variable_operator_or_write_node_t *cast = (yp_instance_variable_operator_or_write_node_t *) node;
+            VALUE argv[5];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // location
+            argv[3] = LONG2FIX(node->location.start - parser->start);
+            argv[4] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("InstanceVariableOperatorOrWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_INSTANCE_VARIABLE_OPERATOR_WRITE_NODE: {
+            yp_instance_variable_operator_write_node_t *cast = (yp_instance_variable_operator_write_node_t *) node;
+            VALUE argv[6];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // operator
+            argv[3] = rb_id2sym(constants[cast->operator - 1]);
+
+            // location
+            argv[4] = LONG2FIX(node->location.start - parser->start);
+            argv[5] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(6, argv, rb_const_get_at(rb_cYARP, rb_intern("InstanceVariableOperatorWriteNode")));
         }
 #line 36 "api_node.c.erb"
         case YP_NODE_INSTANCE_VARIABLE_READ_NODE: {
@@ -1144,6 +1522,78 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             return rb_class_new_instance(6, argv, rb_const_get_at(rb_cYARP, rb_intern("LambdaNode")));
         }
 #line 36 "api_node.c.erb"
+        case YP_NODE_LOCAL_VARIABLE_OPERATOR_AND_WRITE_NODE: {
+            yp_local_variable_operator_and_write_node_t *cast = (yp_local_variable_operator_and_write_node_t *) node;
+            VALUE argv[6];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // constant_id
+            argv[3] = rb_id2sym(constants[cast->constant_id - 1]);
+
+            // location
+            argv[4] = LONG2FIX(node->location.start - parser->start);
+            argv[5] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(6, argv, rb_const_get_at(rb_cYARP, rb_intern("LocalVariableOperatorAndWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_LOCAL_VARIABLE_OPERATOR_OR_WRITE_NODE: {
+            yp_local_variable_operator_or_write_node_t *cast = (yp_local_variable_operator_or_write_node_t *) node;
+            VALUE argv[6];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // constant_id
+            argv[3] = rb_id2sym(constants[cast->constant_id - 1]);
+
+            // location
+            argv[4] = LONG2FIX(node->location.start - parser->start);
+            argv[5] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(6, argv, rb_const_get_at(rb_cYARP, rb_intern("LocalVariableOperatorOrWriteNode")));
+        }
+#line 36 "api_node.c.erb"
+        case YP_NODE_LOCAL_VARIABLE_OPERATOR_WRITE_NODE: {
+            yp_local_variable_operator_write_node_t *cast = (yp_local_variable_operator_write_node_t *) node;
+            VALUE argv[7];
+
+            // name_loc
+            argv[0] = location_new(parser, cast->name_loc.start, cast->name_loc.end);
+
+            // operator_loc
+            argv[1] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
+
+            // value
+            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
+
+            // constant_id
+            argv[3] = rb_id2sym(constants[cast->constant_id - 1]);
+
+            // operator_id
+            argv[4] = rb_id2sym(constants[cast->operator_id - 1]);
+
+            // location
+            argv[5] = LONG2FIX(node->location.start - parser->start);
+            argv[6] = LONG2FIX(node->location.end - node->location.start);
+
+            return rb_class_new_instance(7, argv, rb_const_get_at(rb_cYARP, rb_intern("LocalVariableOperatorWriteNode")));
+        }
+#line 36 "api_node.c.erb"
         case YP_NODE_LOCAL_VARIABLE_READ_NODE: {
             yp_local_variable_read_node_t *cast = (yp_local_variable_read_node_t *) node;
             VALUE argv[4];
@@ -1347,66 +1797,6 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
             argv[1] = LONG2FIX(node->location.end - node->location.start);
 
             return rb_class_new_instance(2, argv, rb_const_get_at(rb_cYARP, rb_intern("NumberedReferenceReadNode")));
-        }
-#line 36 "api_node.c.erb"
-        case YP_NODE_OPERATOR_AND_ASSIGNMENT_NODE: {
-            yp_operator_and_assignment_node_t *cast = (yp_operator_and_assignment_node_t *) node;
-            VALUE argv[5];
-
-            // target
-            argv[0] = yp_node_new(parser, (yp_node_t *) cast->target, encoding, constants);
-
-            // value
-            argv[1] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
-
-            // operator_loc
-            argv[2] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
-
-            // location
-            argv[3] = LONG2FIX(node->location.start - parser->start);
-            argv[4] = LONG2FIX(node->location.end - node->location.start);
-
-            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("OperatorAndAssignmentNode")));
-        }
-#line 36 "api_node.c.erb"
-        case YP_NODE_OPERATOR_ASSIGNMENT_NODE: {
-            yp_operator_assignment_node_t *cast = (yp_operator_assignment_node_t *) node;
-            VALUE argv[5];
-
-            // target
-            argv[0] = yp_node_new(parser, (yp_node_t *) cast->target, encoding, constants);
-
-            // operator
-            argv[1] = yp_token_new(parser, &cast->operator, encoding);
-
-            // value
-            argv[2] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
-
-            // location
-            argv[3] = LONG2FIX(node->location.start - parser->start);
-            argv[4] = LONG2FIX(node->location.end - node->location.start);
-
-            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("OperatorAssignmentNode")));
-        }
-#line 36 "api_node.c.erb"
-        case YP_NODE_OPERATOR_OR_ASSIGNMENT_NODE: {
-            yp_operator_or_assignment_node_t *cast = (yp_operator_or_assignment_node_t *) node;
-            VALUE argv[5];
-
-            // target
-            argv[0] = yp_node_new(parser, (yp_node_t *) cast->target, encoding, constants);
-
-            // value
-            argv[1] = yp_node_new(parser, (yp_node_t *) cast->value, encoding, constants);
-
-            // operator_loc
-            argv[2] = location_new(parser, cast->operator_loc.start, cast->operator_loc.end);
-
-            // location
-            argv[3] = LONG2FIX(node->location.start - parser->start);
-            argv[4] = LONG2FIX(node->location.end - node->location.start);
-
-            return rb_class_new_instance(5, argv, rb_const_get_at(rb_cYARP, rb_intern("OperatorOrAssignmentNode")));
         }
 #line 36 "api_node.c.erb"
         case YP_NODE_OPTIONAL_PARAMETER_NODE: {
@@ -2213,7 +2603,7 @@ yp_node_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding, ID *con
     }
 }
 
-#line 97 "api_node.c.erb"
+#line 93 "api_node.c.erb"
 VALUE yp_ast_new(yp_parser_t *parser, yp_node_t *node, rb_encoding *encoding) {
     ID * constants = calloc(parser->constant_pool.size, sizeof(ID));
 

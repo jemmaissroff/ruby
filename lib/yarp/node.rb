@@ -737,6 +737,136 @@ module YARP
     end
   end
 
+  # Represents the use of the `&&=` operator on a call.
+  #
+  #     foo.bar &&= value
+  #     ^^^^^^^^^^^^^^^^^
+  class CallOperatorAndWriteNode < Node
+    # attr_reader target: Node
+    attr_reader :target
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # def initialize: (target: Node, operator_loc: Location, value: Node, start_offset: Integer, length: Integer) -> void
+    def initialize(target, operator_loc, value, start_offset, length)
+      @target = target
+      @operator_loc = operator_loc
+      @value = value
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_call_operator_and_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [target, value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { target: target, operator_loc: operator_loc, value: value, location: location }
+    end
+  end
+
+  # Represents the use of the `||=` operator on a call.
+  #
+  #     foo.bar ||= value
+  #     ^^^^^^^^^^^^^^^^^
+  class CallOperatorOrWriteNode < Node
+    # attr_reader target: Node
+    attr_reader :target
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # def initialize: (target: Node, value: Node, operator_loc: Location, start_offset: Integer, length: Integer) -> void
+    def initialize(target, value, operator_loc, start_offset, length)
+      @target = target
+      @value = value
+      @operator_loc = operator_loc
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_call_operator_or_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [target, value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { target: target, value: value, operator_loc: operator_loc, location: location }
+    end
+  end
+
+  # Represents the use of an assignment operator on a call.
+  #
+  #     foo.bar += baz
+  #     ^^^^^^^^^^^^^^
+  class CallOperatorWriteNode < Node
+    # attr_reader target: Node
+    attr_reader :target
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # attr_reader operator_id: Symbol
+    attr_reader :operator_id
+
+    # def initialize: (target: Node, operator_loc: Location, value: Node, operator_id: Symbol, start_offset: Integer, length: Integer) -> void
+    def initialize(target, operator_loc, value, operator_id, start_offset, length)
+      @target = target
+      @operator_loc = operator_loc
+      @value = value
+      @operator_id = operator_id
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_call_operator_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [target, value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { target: target, operator_loc: operator_loc, value: value, operator_id: operator_id, location: location }
+    end
+  end
+
   # Represents assigning to a local variable in pattern matching.
   #
   #     foo => [bar => baz]
@@ -889,6 +1019,136 @@ module YARP
     end
   end
 
+  # Represents the use of the `&&=` operator for assignment to a class variable.
+  #
+  #     @@target &&= value
+  #     ^^^^^^^^^^^^^^^^
+  class ClassVariableOperatorAndWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_class_variable_operator_and_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, location: location }
+    end
+  end
+
+  # Represents the use of the `||=` operator for assignment to a class variable.
+  #
+  #     @@target ||= value
+  #     ^^^^^^^^^^^^^^^^^^
+  class ClassVariableOperatorOrWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_class_variable_operator_or_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, location: location }
+    end
+  end
+
+  # Represents assigning to a class variable using an operator that isn't `=`.
+  #
+  #     @@target += value
+  #     ^^^^^^^^^^^^^^^^^
+  class ClassVariableOperatorWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # attr_reader operator: Symbol
+    attr_reader :operator
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, operator: Symbol, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, operator, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @operator = operator
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_class_variable_operator_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, operator: operator, location: location }
+    end
+  end
+
   # Represents referencing a class variable.
   #
   #     @@foo
@@ -961,6 +1221,136 @@ module YARP
     end
   end
 
+  # Represents the use of the `&&=` operator for assignment to a constant.
+  #
+  #     Target &&= value
+  #     ^^^^^^^^^^^^^^^^
+  class ConstantOperatorAndWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_constant_operator_and_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, location: location }
+    end
+  end
+
+  # Represents the use of the `||=` operator for assignment to a constant.
+  #
+  #     Target ||= value
+  #     ^^^^^^^^^^^^^^^^
+  class ConstantOperatorOrWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_constant_operator_or_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, location: location }
+    end
+  end
+
+  # Represents assigning to a constant using an operator that isn't `=`.
+  #
+  #     Target += value
+  #     ^^^^^^^^^^^^^^^
+  class ConstantOperatorWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # attr_reader operator: Symbol
+    attr_reader :operator
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, operator: Symbol, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, operator, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @operator = operator
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_constant_operator_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, operator: operator, location: location }
+    end
+  end
+
   # Represents accessing a constant through a path of `::` operators.
   #
   #     Foo::Bar
@@ -1000,6 +1390,136 @@ module YARP
     # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
     def deconstruct_keys(keys)
       { parent: parent, child: child, delimiter_loc: delimiter_loc, location: location }
+    end
+  end
+
+  # Represents the use of the `&&=` operator for assignment to a constant path.
+  #
+  #     Parent::Child &&= value
+  #     ^^^^^^^^^^^^^^^^^^^^^^^
+  class ConstantPathOperatorAndWriteNode < Node
+    # attr_reader target: Node
+    attr_reader :target
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # def initialize: (target: Node, operator_loc: Location, value: Node, start_offset: Integer, length: Integer) -> void
+    def initialize(target, operator_loc, value, start_offset, length)
+      @target = target
+      @operator_loc = operator_loc
+      @value = value
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_constant_path_operator_and_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [target, value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { target: target, operator_loc: operator_loc, value: value, location: location }
+    end
+  end
+
+  # Represents the use of the `||=` operator for assignment to a constant path.
+  #
+  #     Parent::Child ||= value
+  #     ^^^^^^^^^^^^^^^^^^^^^^^
+  class ConstantPathOperatorOrWriteNode < Node
+    # attr_reader target: Node
+    attr_reader :target
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # def initialize: (target: Node, operator_loc: Location, value: Node, start_offset: Integer, length: Integer) -> void
+    def initialize(target, operator_loc, value, start_offset, length)
+      @target = target
+      @operator_loc = operator_loc
+      @value = value
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_constant_path_operator_or_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [target, value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { target: target, operator_loc: operator_loc, value: value, location: location }
+    end
+  end
+
+  # Represents assigning to a constant path using an operator that isn't `=`.
+  #
+  #     Parent::Child += value
+  #     ^^^^^^^^^^^^^^^^^^^^^^
+  class ConstantPathOperatorWriteNode < Node
+    # attr_reader target: Node
+    attr_reader :target
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # attr_reader operator: Symbol
+    attr_reader :operator
+
+    # def initialize: (target: Node, operator_loc: Location, value: Node, operator: Symbol, start_offset: Integer, length: Integer) -> void
+    def initialize(target, operator_loc, value, operator, start_offset, length)
+      @target = target
+      @operator_loc = operator_loc
+      @value = value
+      @operator = operator
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_constant_path_operator_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [target, value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { target: target, operator_loc: operator_loc, value: value, operator: operator, location: location }
     end
   end
 
@@ -1562,6 +2082,136 @@ module YARP
     end
   end
 
+  # Represents the use of the `&&=` operator for assignment to a global variable.
+  #
+  #     $target &&= value
+  #     ^^^^^^^^^^^^^^^^^
+  class GlobalVariableOperatorAndWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_global_variable_operator_and_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, location: location }
+    end
+  end
+
+  # Represents the use of the `||=` operator for assignment to a global variable.
+  #
+  #     $target ||= value
+  #     ^^^^^^^^^^^^^^^^^
+  class GlobalVariableOperatorOrWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_global_variable_operator_or_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, location: location }
+    end
+  end
+
+  # Represents assigning to a global variable using an operator that isn't `=`.
+  #
+  #     $target += value
+  #     ^^^^^^^^^^^^^^^^
+  class GlobalVariableOperatorWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # attr_reader operator: Symbol
+    attr_reader :operator
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, operator: Symbol, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, operator, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @operator = operator
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_global_variable_operator_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, operator: operator, location: location }
+    end
+  end
+
   # Represents referencing a global variable.
   #
   #     $foo
@@ -1859,6 +2509,136 @@ module YARP
     # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
     def deconstruct_keys(keys)
       { pattern: pattern, statements: statements, in_loc: in_loc, then_loc: then_loc, location: location }
+    end
+  end
+
+  # Represents the use of the `&&=` operator for assignment to an instance variable.
+  #
+  #     @target &&= value
+  #     ^^^^^^^^^^^^^^^^^
+  class InstanceVariableOperatorAndWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_instance_variable_operator_and_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, location: location }
+    end
+  end
+
+  # Represents the use of the `||=` operator for assignment to an instance variable.
+  #
+  #     @target ||= value
+  #     ^^^^^^^^^^^^^^^^^
+  class InstanceVariableOperatorOrWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_instance_variable_operator_or_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, location: location }
+    end
+  end
+
+  # Represents assigning to an instance variable using an operator that isn't `=`.
+  #
+  #     @target += value
+  #     ^^^^^^^^^^^^^^^^
+  class InstanceVariableOperatorWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # attr_reader operator: Symbol
+    attr_reader :operator
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, operator: Symbol, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, operator, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @operator = operator
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_instance_variable_operator_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, operator: operator, location: location }
     end
   end
 
@@ -2298,6 +3078,148 @@ module YARP
     end
   end
 
+  # Represents the use of the `&&=` operator for assignment to a local variable.
+  #
+  #     target &&= value
+  #     ^^^^^^^^^^^^^^^^
+  class LocalVariableOperatorAndWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # attr_reader constant_id: Symbol
+    attr_reader :constant_id
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, constant_id: Symbol, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, constant_id, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @constant_id = constant_id
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_local_variable_operator_and_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, constant_id: constant_id, location: location }
+    end
+  end
+
+  # Represents the use of the `||=` operator for assignment to a local variable.
+  #
+  #     target ||= value
+  #     ^^^^^^^^^^^^^^^^
+  class LocalVariableOperatorOrWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # attr_reader constant_id: Symbol
+    attr_reader :constant_id
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, constant_id: Symbol, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, constant_id, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @constant_id = constant_id
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_local_variable_operator_or_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, constant_id: constant_id, location: location }
+    end
+  end
+
+  # Represents assigning to a local variable using an operator that isn't `=`.
+  #
+  #     target += value
+  #     ^^^^^^^^^^^^^^^
+  class LocalVariableOperatorWriteNode < Node
+    # attr_reader name_loc: Location
+    attr_reader :name_loc
+
+    # attr_reader operator_loc: Location
+    attr_reader :operator_loc
+
+    # attr_reader value: Node
+    attr_reader :value
+
+    # attr_reader constant_id: Symbol
+    attr_reader :constant_id
+
+    # attr_reader operator_id: Symbol
+    attr_reader :operator_id
+
+    # def initialize: (name_loc: Location, operator_loc: Location, value: Node, constant_id: Symbol, operator_id: Symbol, start_offset: Integer, length: Integer) -> void
+    def initialize(name_loc, operator_loc, value, constant_id, operator_id, start_offset, length)
+      @name_loc = name_loc
+      @operator_loc = operator_loc
+      @value = value
+      @constant_id = constant_id
+      @operator_id = operator_id
+      @start_offset = start_offset
+      @length = length
+    end
+
+    # def accept: (visitor: Visitor) -> void
+    def accept(visitor)
+      visitor.visit_local_variable_operator_write_node(self)
+    end
+
+    # def child_nodes: () -> Array[nil | Node]
+    def child_nodes
+      [value]
+    end
+
+    # def deconstruct: () -> Array[nil | Node]
+    alias deconstruct child_nodes
+
+    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
+    def deconstruct_keys(keys)
+      { name_loc: name_loc, operator_loc: operator_loc, value: value, constant_id: constant_id, operator_id: operator_id, location: location }
+    end
+  end
+
   # Represents reading a local variable. Note that this requires that a local
   # variable of the same name has already been written to in the same scope,
   # otherwise it is parsed as a method call.
@@ -2734,132 +3656,6 @@ module YARP
     # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
     def deconstruct_keys(keys)
       { location: location }
-    end
-  end
-
-  # Represents the use of the `&&=` operator for assignment.
-  #
-  #     target &&= value
-  #     ^^^^^^^^^^^^^^^^
-  class OperatorAndAssignmentNode < Node
-    # attr_reader target: Node
-    attr_reader :target
-
-    # attr_reader value: Node
-    attr_reader :value
-
-    # attr_reader operator_loc: Location
-    attr_reader :operator_loc
-
-    # def initialize: (target: Node, value: Node, operator_loc: Location, start_offset: Integer, length: Integer) -> void
-    def initialize(target, value, operator_loc, start_offset, length)
-      @target = target
-      @value = value
-      @operator_loc = operator_loc
-      @start_offset = start_offset
-      @length = length
-    end
-
-    # def accept: (visitor: Visitor) -> void
-    def accept(visitor)
-      visitor.visit_operator_and_assignment_node(self)
-    end
-
-    # def child_nodes: () -> Array[nil | Node]
-    def child_nodes
-      [target, value]
-    end
-
-    # def deconstruct: () -> Array[nil | Node]
-    alias deconstruct child_nodes
-
-    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
-    def deconstruct_keys(keys)
-      { target: target, value: value, operator_loc: operator_loc, location: location }
-    end
-  end
-
-  # Represents assigning to a value using an operator that isn't `=`.
-  #
-  #     foo += bar
-  #     ^^^^^^^^^^
-  class OperatorAssignmentNode < Node
-    # attr_reader target: Node
-    attr_reader :target
-
-    # attr_reader operator: Token
-    attr_reader :operator
-
-    # attr_reader value: Node
-    attr_reader :value
-
-    # def initialize: (target: Node, operator: Token, value: Node, start_offset: Integer, length: Integer) -> void
-    def initialize(target, operator, value, start_offset, length)
-      @target = target
-      @operator = operator
-      @value = value
-      @start_offset = start_offset
-      @length = length
-    end
-
-    # def accept: (visitor: Visitor) -> void
-    def accept(visitor)
-      visitor.visit_operator_assignment_node(self)
-    end
-
-    # def child_nodes: () -> Array[nil | Node]
-    def child_nodes
-      [target, value]
-    end
-
-    # def deconstruct: () -> Array[nil | Node]
-    alias deconstruct child_nodes
-
-    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
-    def deconstruct_keys(keys)
-      { target: target, operator: operator, value: value, location: location }
-    end
-  end
-
-  # Represents the use of the `||=` operator for assignment.
-  #
-  #     target ||= value
-  #     ^^^^^^^^^^^^^^^^
-  class OperatorOrAssignmentNode < Node
-    # attr_reader target: Node
-    attr_reader :target
-
-    # attr_reader value: Node
-    attr_reader :value
-
-    # attr_reader operator_loc: Location
-    attr_reader :operator_loc
-
-    # def initialize: (target: Node, value: Node, operator_loc: Location, start_offset: Integer, length: Integer) -> void
-    def initialize(target, value, operator_loc, start_offset, length)
-      @target = target
-      @value = value
-      @operator_loc = operator_loc
-      @start_offset = start_offset
-      @length = length
-    end
-
-    # def accept: (visitor: Visitor) -> void
-    def accept(visitor)
-      visitor.visit_operator_or_assignment_node(self)
-    end
-
-    # def child_nodes: () -> Array[nil | Node]
-    def child_nodes
-      [target, value]
-    end
-
-    # def deconstruct: () -> Array[nil | Node]
-    alias deconstruct child_nodes
-
-    # def deconstruct_keys: (keys: Array[Symbol]) -> Hash[Symbol, nil | Node | Array[Node] | String | Token | Array[Token] | Location]
-    def deconstruct_keys(keys)
-      { target: target, value: value, operator_loc: operator_loc, location: location }
     end
   end
 
@@ -4603,6 +5399,15 @@ module YARP
     # Visit a CallNode node
     alias visit_call_node visit_child_nodes
 
+    # Visit a CallOperatorAndWriteNode node
+    alias visit_call_operator_and_write_node visit_child_nodes
+
+    # Visit a CallOperatorOrWriteNode node
+    alias visit_call_operator_or_write_node visit_child_nodes
+
+    # Visit a CallOperatorWriteNode node
+    alias visit_call_operator_write_node visit_child_nodes
+
     # Visit a CapturePatternNode node
     alias visit_capture_pattern_node visit_child_nodes
 
@@ -4612,14 +5417,41 @@ module YARP
     # Visit a ClassNode node
     alias visit_class_node visit_child_nodes
 
+    # Visit a ClassVariableOperatorAndWriteNode node
+    alias visit_class_variable_operator_and_write_node visit_child_nodes
+
+    # Visit a ClassVariableOperatorOrWriteNode node
+    alias visit_class_variable_operator_or_write_node visit_child_nodes
+
+    # Visit a ClassVariableOperatorWriteNode node
+    alias visit_class_variable_operator_write_node visit_child_nodes
+
     # Visit a ClassVariableReadNode node
     alias visit_class_variable_read_node visit_child_nodes
 
     # Visit a ClassVariableWriteNode node
     alias visit_class_variable_write_node visit_child_nodes
 
+    # Visit a ConstantOperatorAndWriteNode node
+    alias visit_constant_operator_and_write_node visit_child_nodes
+
+    # Visit a ConstantOperatorOrWriteNode node
+    alias visit_constant_operator_or_write_node visit_child_nodes
+
+    # Visit a ConstantOperatorWriteNode node
+    alias visit_constant_operator_write_node visit_child_nodes
+
     # Visit a ConstantPathNode node
     alias visit_constant_path_node visit_child_nodes
+
+    # Visit a ConstantPathOperatorAndWriteNode node
+    alias visit_constant_path_operator_and_write_node visit_child_nodes
+
+    # Visit a ConstantPathOperatorOrWriteNode node
+    alias visit_constant_path_operator_or_write_node visit_child_nodes
+
+    # Visit a ConstantPathOperatorWriteNode node
+    alias visit_constant_path_operator_write_node visit_child_nodes
 
     # Visit a ConstantPathWriteNode node
     alias visit_constant_path_write_node visit_child_nodes
@@ -4660,6 +5492,15 @@ module YARP
     # Visit a ForwardingSuperNode node
     alias visit_forwarding_super_node visit_child_nodes
 
+    # Visit a GlobalVariableOperatorAndWriteNode node
+    alias visit_global_variable_operator_and_write_node visit_child_nodes
+
+    # Visit a GlobalVariableOperatorOrWriteNode node
+    alias visit_global_variable_operator_or_write_node visit_child_nodes
+
+    # Visit a GlobalVariableOperatorWriteNode node
+    alias visit_global_variable_operator_write_node visit_child_nodes
+
     # Visit a GlobalVariableReadNode node
     alias visit_global_variable_read_node visit_child_nodes
 
@@ -4680,6 +5521,15 @@ module YARP
 
     # Visit a InNode node
     alias visit_in_node visit_child_nodes
+
+    # Visit a InstanceVariableOperatorAndWriteNode node
+    alias visit_instance_variable_operator_and_write_node visit_child_nodes
+
+    # Visit a InstanceVariableOperatorOrWriteNode node
+    alias visit_instance_variable_operator_or_write_node visit_child_nodes
+
+    # Visit a InstanceVariableOperatorWriteNode node
+    alias visit_instance_variable_operator_write_node visit_child_nodes
 
     # Visit a InstanceVariableReadNode node
     alias visit_instance_variable_read_node visit_child_nodes
@@ -4714,6 +5564,15 @@ module YARP
     # Visit a LambdaNode node
     alias visit_lambda_node visit_child_nodes
 
+    # Visit a LocalVariableOperatorAndWriteNode node
+    alias visit_local_variable_operator_and_write_node visit_child_nodes
+
+    # Visit a LocalVariableOperatorOrWriteNode node
+    alias visit_local_variable_operator_or_write_node visit_child_nodes
+
+    # Visit a LocalVariableOperatorWriteNode node
+    alias visit_local_variable_operator_write_node visit_child_nodes
+
     # Visit a LocalVariableReadNode node
     alias visit_local_variable_read_node visit_child_nodes
 
@@ -4746,15 +5605,6 @@ module YARP
 
     # Visit a NumberedReferenceReadNode node
     alias visit_numbered_reference_read_node visit_child_nodes
-
-    # Visit a OperatorAndAssignmentNode node
-    alias visit_operator_and_assignment_node visit_child_nodes
-
-    # Visit a OperatorAssignmentNode node
-    alias visit_operator_assignment_node visit_child_nodes
-
-    # Visit a OperatorOrAssignmentNode node
-    alias visit_operator_or_assignment_node visit_child_nodes
 
     # Visit a OptionalParameterNode node
     alias visit_optional_parameter_node visit_child_nodes
@@ -4965,6 +5815,21 @@ module YARP
       CallNode.new(receiver, operator_loc, message_loc, opening_loc, arguments, closing_loc, block, flags, name, 0, 0)
     end
 
+    # Create a new CallOperatorAndWriteNode node
+    def CallOperatorAndWriteNode(target, operator_loc, value)
+      CallOperatorAndWriteNode.new(target, operator_loc, value, 0, 0)
+    end
+
+    # Create a new CallOperatorOrWriteNode node
+    def CallOperatorOrWriteNode(target, value, operator_loc)
+      CallOperatorOrWriteNode.new(target, value, operator_loc, 0, 0)
+    end
+
+    # Create a new CallOperatorWriteNode node
+    def CallOperatorWriteNode(target, operator_loc, value, operator_id)
+      CallOperatorWriteNode.new(target, operator_loc, value, operator_id, 0, 0)
+    end
+
     # Create a new CapturePatternNode node
     def CapturePatternNode(value, target, operator_loc)
       CapturePatternNode.new(value, target, operator_loc, 0, 0)
@@ -4980,6 +5845,21 @@ module YARP
       ClassNode.new(locals, class_keyword_loc, constant_path, inheritance_operator_loc, superclass, statements, end_keyword_loc, 0, 0)
     end
 
+    # Create a new ClassVariableOperatorAndWriteNode node
+    def ClassVariableOperatorAndWriteNode(name_loc, operator_loc, value)
+      ClassVariableOperatorAndWriteNode.new(name_loc, operator_loc, value, 0, 0)
+    end
+
+    # Create a new ClassVariableOperatorOrWriteNode node
+    def ClassVariableOperatorOrWriteNode(name_loc, operator_loc, value)
+      ClassVariableOperatorOrWriteNode.new(name_loc, operator_loc, value, 0, 0)
+    end
+
+    # Create a new ClassVariableOperatorWriteNode node
+    def ClassVariableOperatorWriteNode(name_loc, operator_loc, value, operator)
+      ClassVariableOperatorWriteNode.new(name_loc, operator_loc, value, operator, 0, 0)
+    end
+
     # Create a new ClassVariableReadNode node
     def ClassVariableReadNode()
       ClassVariableReadNode.new(0, 0)
@@ -4990,9 +5870,39 @@ module YARP
       ClassVariableWriteNode.new(name_loc, value, operator_loc, 0, 0)
     end
 
+    # Create a new ConstantOperatorAndWriteNode node
+    def ConstantOperatorAndWriteNode(name_loc, operator_loc, value)
+      ConstantOperatorAndWriteNode.new(name_loc, operator_loc, value, 0, 0)
+    end
+
+    # Create a new ConstantOperatorOrWriteNode node
+    def ConstantOperatorOrWriteNode(name_loc, operator_loc, value)
+      ConstantOperatorOrWriteNode.new(name_loc, operator_loc, value, 0, 0)
+    end
+
+    # Create a new ConstantOperatorWriteNode node
+    def ConstantOperatorWriteNode(name_loc, operator_loc, value, operator)
+      ConstantOperatorWriteNode.new(name_loc, operator_loc, value, operator, 0, 0)
+    end
+
     # Create a new ConstantPathNode node
     def ConstantPathNode(parent, child, delimiter_loc)
       ConstantPathNode.new(parent, child, delimiter_loc, 0, 0)
+    end
+
+    # Create a new ConstantPathOperatorAndWriteNode node
+    def ConstantPathOperatorAndWriteNode(target, operator_loc, value)
+      ConstantPathOperatorAndWriteNode.new(target, operator_loc, value, 0, 0)
+    end
+
+    # Create a new ConstantPathOperatorOrWriteNode node
+    def ConstantPathOperatorOrWriteNode(target, operator_loc, value)
+      ConstantPathOperatorOrWriteNode.new(target, operator_loc, value, 0, 0)
+    end
+
+    # Create a new ConstantPathOperatorWriteNode node
+    def ConstantPathOperatorWriteNode(target, operator_loc, value, operator)
+      ConstantPathOperatorWriteNode.new(target, operator_loc, value, operator, 0, 0)
     end
 
     # Create a new ConstantPathWriteNode node
@@ -5060,6 +5970,21 @@ module YARP
       ForwardingSuperNode.new(block, 0, 0)
     end
 
+    # Create a new GlobalVariableOperatorAndWriteNode node
+    def GlobalVariableOperatorAndWriteNode(name_loc, operator_loc, value)
+      GlobalVariableOperatorAndWriteNode.new(name_loc, operator_loc, value, 0, 0)
+    end
+
+    # Create a new GlobalVariableOperatorOrWriteNode node
+    def GlobalVariableOperatorOrWriteNode(name_loc, operator_loc, value)
+      GlobalVariableOperatorOrWriteNode.new(name_loc, operator_loc, value, 0, 0)
+    end
+
+    # Create a new GlobalVariableOperatorWriteNode node
+    def GlobalVariableOperatorWriteNode(name_loc, operator_loc, value, operator)
+      GlobalVariableOperatorWriteNode.new(name_loc, operator_loc, value, operator, 0, 0)
+    end
+
     # Create a new GlobalVariableReadNode node
     def GlobalVariableReadNode()
       GlobalVariableReadNode.new(0, 0)
@@ -5093,6 +6018,21 @@ module YARP
     # Create a new InNode node
     def InNode(pattern, statements, in_loc, then_loc)
       InNode.new(pattern, statements, in_loc, then_loc, 0, 0)
+    end
+
+    # Create a new InstanceVariableOperatorAndWriteNode node
+    def InstanceVariableOperatorAndWriteNode(name_loc, operator_loc, value)
+      InstanceVariableOperatorAndWriteNode.new(name_loc, operator_loc, value, 0, 0)
+    end
+
+    # Create a new InstanceVariableOperatorOrWriteNode node
+    def InstanceVariableOperatorOrWriteNode(name_loc, operator_loc, value)
+      InstanceVariableOperatorOrWriteNode.new(name_loc, operator_loc, value, 0, 0)
+    end
+
+    # Create a new InstanceVariableOperatorWriteNode node
+    def InstanceVariableOperatorWriteNode(name_loc, operator_loc, value, operator)
+      InstanceVariableOperatorWriteNode.new(name_loc, operator_loc, value, operator, 0, 0)
     end
 
     # Create a new InstanceVariableReadNode node
@@ -5150,6 +6090,21 @@ module YARP
       LambdaNode.new(locals, opening_loc, parameters, statements, 0, 0)
     end
 
+    # Create a new LocalVariableOperatorAndWriteNode node
+    def LocalVariableOperatorAndWriteNode(name_loc, operator_loc, value, constant_id)
+      LocalVariableOperatorAndWriteNode.new(name_loc, operator_loc, value, constant_id, 0, 0)
+    end
+
+    # Create a new LocalVariableOperatorOrWriteNode node
+    def LocalVariableOperatorOrWriteNode(name_loc, operator_loc, value, constant_id)
+      LocalVariableOperatorOrWriteNode.new(name_loc, operator_loc, value, constant_id, 0, 0)
+    end
+
+    # Create a new LocalVariableOperatorWriteNode node
+    def LocalVariableOperatorWriteNode(name_loc, operator_loc, value, constant_id, operator_id)
+      LocalVariableOperatorWriteNode.new(name_loc, operator_loc, value, constant_id, operator_id, 0, 0)
+    end
+
     # Create a new LocalVariableReadNode node
     def LocalVariableReadNode(constant_id, depth)
       LocalVariableReadNode.new(constant_id, depth, 0, 0)
@@ -5203,21 +6158,6 @@ module YARP
     # Create a new NumberedReferenceReadNode node
     def NumberedReferenceReadNode()
       NumberedReferenceReadNode.new(0, 0)
-    end
-
-    # Create a new OperatorAndAssignmentNode node
-    def OperatorAndAssignmentNode(target, value, operator_loc)
-      OperatorAndAssignmentNode.new(target, value, operator_loc, 0, 0)
-    end
-
-    # Create a new OperatorAssignmentNode node
-    def OperatorAssignmentNode(target, operator, value)
-      OperatorAssignmentNode.new(target, operator, value, 0, 0)
-    end
-
-    # Create a new OperatorOrAssignmentNode node
-    def OperatorOrAssignmentNode(target, value, operator_loc)
-      OperatorOrAssignmentNode.new(target, value, operator_loc, 0, 0)
     end
 
     # Create a new OptionalParameterNode node
@@ -5418,796 +6358,6 @@ module YARP
     # Create a new YieldNode node
     def YieldNode(keyword_loc, lparen_loc, arguments, rparen_loc)
       YieldNode.new(keyword_loc, lparen_loc, arguments, rparen_loc, 0, 0)
-    end
-
-    # Create a new EOF token
-    def EOF(value, location = Location.null)
-      Token.new(:EOF, value, location.start_offset, location.length)
-    end
-
-    # Create a new MISSING token
-    def MISSING(value, location = Location.null)
-      Token.new(:MISSING, value, location.start_offset, location.length)
-    end
-
-    # Create a new NOT_PROVIDED token
-    def NOT_PROVIDED(value, location = Location.null)
-      Token.new(:NOT_PROVIDED, value, location.start_offset, location.length)
-    end
-
-    # Create a new AMPERSAND token
-    def AMPERSAND(value, location = Location.null)
-      Token.new(:AMPERSAND, value, location.start_offset, location.length)
-    end
-
-    # Create a new AMPERSAND_AMPERSAND token
-    def AMPERSAND_AMPERSAND(value, location = Location.null)
-      Token.new(:AMPERSAND_AMPERSAND, value, location.start_offset, location.length)
-    end
-
-    # Create a new AMPERSAND_AMPERSAND_EQUAL token
-    def AMPERSAND_AMPERSAND_EQUAL(value, location = Location.null)
-      Token.new(:AMPERSAND_AMPERSAND_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new AMPERSAND_DOT token
-    def AMPERSAND_DOT(value, location = Location.null)
-      Token.new(:AMPERSAND_DOT, value, location.start_offset, location.length)
-    end
-
-    # Create a new AMPERSAND_EQUAL token
-    def AMPERSAND_EQUAL(value, location = Location.null)
-      Token.new(:AMPERSAND_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new BACKTICK token
-    def BACKTICK(value, location = Location.null)
-      Token.new(:BACKTICK, value, location.start_offset, location.length)
-    end
-
-    # Create a new BACK_REFERENCE token
-    def BACK_REFERENCE(value, location = Location.null)
-      Token.new(:BACK_REFERENCE, value, location.start_offset, location.length)
-    end
-
-    # Create a new BANG token
-    def BANG(value, location = Location.null)
-      Token.new(:BANG, value, location.start_offset, location.length)
-    end
-
-    # Create a new BANG_EQUAL token
-    def BANG_EQUAL(value, location = Location.null)
-      Token.new(:BANG_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new BANG_TILDE token
-    def BANG_TILDE(value, location = Location.null)
-      Token.new(:BANG_TILDE, value, location.start_offset, location.length)
-    end
-
-    # Create a new BRACE_LEFT token
-    def BRACE_LEFT(value, location = Location.null)
-      Token.new(:BRACE_LEFT, value, location.start_offset, location.length)
-    end
-
-    # Create a new BRACE_RIGHT token
-    def BRACE_RIGHT(value, location = Location.null)
-      Token.new(:BRACE_RIGHT, value, location.start_offset, location.length)
-    end
-
-    # Create a new BRACKET_LEFT token
-    def BRACKET_LEFT(value, location = Location.null)
-      Token.new(:BRACKET_LEFT, value, location.start_offset, location.length)
-    end
-
-    # Create a new BRACKET_LEFT_ARRAY token
-    def BRACKET_LEFT_ARRAY(value, location = Location.null)
-      Token.new(:BRACKET_LEFT_ARRAY, value, location.start_offset, location.length)
-    end
-
-    # Create a new BRACKET_LEFT_RIGHT token
-    def BRACKET_LEFT_RIGHT(value, location = Location.null)
-      Token.new(:BRACKET_LEFT_RIGHT, value, location.start_offset, location.length)
-    end
-
-    # Create a new BRACKET_LEFT_RIGHT_EQUAL token
-    def BRACKET_LEFT_RIGHT_EQUAL(value, location = Location.null)
-      Token.new(:BRACKET_LEFT_RIGHT_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new BRACKET_RIGHT token
-    def BRACKET_RIGHT(value, location = Location.null)
-      Token.new(:BRACKET_RIGHT, value, location.start_offset, location.length)
-    end
-
-    # Create a new CARET token
-    def CARET(value, location = Location.null)
-      Token.new(:CARET, value, location.start_offset, location.length)
-    end
-
-    # Create a new CARET_EQUAL token
-    def CARET_EQUAL(value, location = Location.null)
-      Token.new(:CARET_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new CHARACTER_LITERAL token
-    def CHARACTER_LITERAL(value, location = Location.null)
-      Token.new(:CHARACTER_LITERAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new CLASS_VARIABLE token
-    def CLASS_VARIABLE(value, location = Location.null)
-      Token.new(:CLASS_VARIABLE, value, location.start_offset, location.length)
-    end
-
-    # Create a new COLON token
-    def COLON(value, location = Location.null)
-      Token.new(:COLON, value, location.start_offset, location.length)
-    end
-
-    # Create a new COLON_COLON token
-    def COLON_COLON(value, location = Location.null)
-      Token.new(:COLON_COLON, value, location.start_offset, location.length)
-    end
-
-    # Create a new COMMA token
-    def COMMA(value, location = Location.null)
-      Token.new(:COMMA, value, location.start_offset, location.length)
-    end
-
-    # Create a new COMMENT token
-    def COMMENT(value, location = Location.null)
-      Token.new(:COMMENT, value, location.start_offset, location.length)
-    end
-
-    # Create a new CONSTANT token
-    def CONSTANT(value, location = Location.null)
-      Token.new(:CONSTANT, value, location.start_offset, location.length)
-    end
-
-    # Create a new DOT token
-    def DOT(value, location = Location.null)
-      Token.new(:DOT, value, location.start_offset, location.length)
-    end
-
-    # Create a new DOT_DOT token
-    def DOT_DOT(value, location = Location.null)
-      Token.new(:DOT_DOT, value, location.start_offset, location.length)
-    end
-
-    # Create a new DOT_DOT_DOT token
-    def DOT_DOT_DOT(value, location = Location.null)
-      Token.new(:DOT_DOT_DOT, value, location.start_offset, location.length)
-    end
-
-    # Create a new EMBDOC_BEGIN token
-    def EMBDOC_BEGIN(value, location = Location.null)
-      Token.new(:EMBDOC_BEGIN, value, location.start_offset, location.length)
-    end
-
-    # Create a new EMBDOC_END token
-    def EMBDOC_END(value, location = Location.null)
-      Token.new(:EMBDOC_END, value, location.start_offset, location.length)
-    end
-
-    # Create a new EMBDOC_LINE token
-    def EMBDOC_LINE(value, location = Location.null)
-      Token.new(:EMBDOC_LINE, value, location.start_offset, location.length)
-    end
-
-    # Create a new EMBEXPR_BEGIN token
-    def EMBEXPR_BEGIN(value, location = Location.null)
-      Token.new(:EMBEXPR_BEGIN, value, location.start_offset, location.length)
-    end
-
-    # Create a new EMBEXPR_END token
-    def EMBEXPR_END(value, location = Location.null)
-      Token.new(:EMBEXPR_END, value, location.start_offset, location.length)
-    end
-
-    # Create a new EMBVAR token
-    def EMBVAR(value, location = Location.null)
-      Token.new(:EMBVAR, value, location.start_offset, location.length)
-    end
-
-    # Create a new EQUAL token
-    def EQUAL(value, location = Location.null)
-      Token.new(:EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new EQUAL_EQUAL token
-    def EQUAL_EQUAL(value, location = Location.null)
-      Token.new(:EQUAL_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new EQUAL_EQUAL_EQUAL token
-    def EQUAL_EQUAL_EQUAL(value, location = Location.null)
-      Token.new(:EQUAL_EQUAL_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new EQUAL_GREATER token
-    def EQUAL_GREATER(value, location = Location.null)
-      Token.new(:EQUAL_GREATER, value, location.start_offset, location.length)
-    end
-
-    # Create a new EQUAL_TILDE token
-    def EQUAL_TILDE(value, location = Location.null)
-      Token.new(:EQUAL_TILDE, value, location.start_offset, location.length)
-    end
-
-    # Create a new FLOAT token
-    def FLOAT(value, location = Location.null)
-      Token.new(:FLOAT, value, location.start_offset, location.length)
-    end
-
-    # Create a new GLOBAL_VARIABLE token
-    def GLOBAL_VARIABLE(value, location = Location.null)
-      Token.new(:GLOBAL_VARIABLE, value, location.start_offset, location.length)
-    end
-
-    # Create a new GREATER token
-    def GREATER(value, location = Location.null)
-      Token.new(:GREATER, value, location.start_offset, location.length)
-    end
-
-    # Create a new GREATER_EQUAL token
-    def GREATER_EQUAL(value, location = Location.null)
-      Token.new(:GREATER_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new GREATER_GREATER token
-    def GREATER_GREATER(value, location = Location.null)
-      Token.new(:GREATER_GREATER, value, location.start_offset, location.length)
-    end
-
-    # Create a new GREATER_GREATER_EQUAL token
-    def GREATER_GREATER_EQUAL(value, location = Location.null)
-      Token.new(:GREATER_GREATER_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new HEREDOC_END token
-    def HEREDOC_END(value, location = Location.null)
-      Token.new(:HEREDOC_END, value, location.start_offset, location.length)
-    end
-
-    # Create a new HEREDOC_START token
-    def HEREDOC_START(value, location = Location.null)
-      Token.new(:HEREDOC_START, value, location.start_offset, location.length)
-    end
-
-    # Create a new IDENTIFIER token
-    def IDENTIFIER(value, location = Location.null)
-      Token.new(:IDENTIFIER, value, location.start_offset, location.length)
-    end
-
-    # Create a new IGNORED_NEWLINE token
-    def IGNORED_NEWLINE(value, location = Location.null)
-      Token.new(:IGNORED_NEWLINE, value, location.start_offset, location.length)
-    end
-
-    # Create a new IMAGINARY_NUMBER token
-    def IMAGINARY_NUMBER(value, location = Location.null)
-      Token.new(:IMAGINARY_NUMBER, value, location.start_offset, location.length)
-    end
-
-    # Create a new INSTANCE_VARIABLE token
-    def INSTANCE_VARIABLE(value, location = Location.null)
-      Token.new(:INSTANCE_VARIABLE, value, location.start_offset, location.length)
-    end
-
-    # Create a new INTEGER token
-    def INTEGER(value, location = Location.null)
-      Token.new(:INTEGER, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_ALIAS token
-    def KEYWORD_ALIAS(value, location = Location.null)
-      Token.new(:KEYWORD_ALIAS, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_AND token
-    def KEYWORD_AND(value, location = Location.null)
-      Token.new(:KEYWORD_AND, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_BEGIN token
-    def KEYWORD_BEGIN(value, location = Location.null)
-      Token.new(:KEYWORD_BEGIN, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_BEGIN_UPCASE token
-    def KEYWORD_BEGIN_UPCASE(value, location = Location.null)
-      Token.new(:KEYWORD_BEGIN_UPCASE, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_BREAK token
-    def KEYWORD_BREAK(value, location = Location.null)
-      Token.new(:KEYWORD_BREAK, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_CASE token
-    def KEYWORD_CASE(value, location = Location.null)
-      Token.new(:KEYWORD_CASE, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_CLASS token
-    def KEYWORD_CLASS(value, location = Location.null)
-      Token.new(:KEYWORD_CLASS, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_DEF token
-    def KEYWORD_DEF(value, location = Location.null)
-      Token.new(:KEYWORD_DEF, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_DEFINED token
-    def KEYWORD_DEFINED(value, location = Location.null)
-      Token.new(:KEYWORD_DEFINED, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_DO token
-    def KEYWORD_DO(value, location = Location.null)
-      Token.new(:KEYWORD_DO, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_DO_LOOP token
-    def KEYWORD_DO_LOOP(value, location = Location.null)
-      Token.new(:KEYWORD_DO_LOOP, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_ELSE token
-    def KEYWORD_ELSE(value, location = Location.null)
-      Token.new(:KEYWORD_ELSE, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_ELSIF token
-    def KEYWORD_ELSIF(value, location = Location.null)
-      Token.new(:KEYWORD_ELSIF, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_END token
-    def KEYWORD_END(value, location = Location.null)
-      Token.new(:KEYWORD_END, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_END_UPCASE token
-    def KEYWORD_END_UPCASE(value, location = Location.null)
-      Token.new(:KEYWORD_END_UPCASE, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_ENSURE token
-    def KEYWORD_ENSURE(value, location = Location.null)
-      Token.new(:KEYWORD_ENSURE, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_FALSE token
-    def KEYWORD_FALSE(value, location = Location.null)
-      Token.new(:KEYWORD_FALSE, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_FOR token
-    def KEYWORD_FOR(value, location = Location.null)
-      Token.new(:KEYWORD_FOR, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_IF token
-    def KEYWORD_IF(value, location = Location.null)
-      Token.new(:KEYWORD_IF, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_IF_MODIFIER token
-    def KEYWORD_IF_MODIFIER(value, location = Location.null)
-      Token.new(:KEYWORD_IF_MODIFIER, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_IN token
-    def KEYWORD_IN(value, location = Location.null)
-      Token.new(:KEYWORD_IN, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_MODULE token
-    def KEYWORD_MODULE(value, location = Location.null)
-      Token.new(:KEYWORD_MODULE, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_NEXT token
-    def KEYWORD_NEXT(value, location = Location.null)
-      Token.new(:KEYWORD_NEXT, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_NIL token
-    def KEYWORD_NIL(value, location = Location.null)
-      Token.new(:KEYWORD_NIL, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_NOT token
-    def KEYWORD_NOT(value, location = Location.null)
-      Token.new(:KEYWORD_NOT, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_OR token
-    def KEYWORD_OR(value, location = Location.null)
-      Token.new(:KEYWORD_OR, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_REDO token
-    def KEYWORD_REDO(value, location = Location.null)
-      Token.new(:KEYWORD_REDO, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_RESCUE token
-    def KEYWORD_RESCUE(value, location = Location.null)
-      Token.new(:KEYWORD_RESCUE, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_RESCUE_MODIFIER token
-    def KEYWORD_RESCUE_MODIFIER(value, location = Location.null)
-      Token.new(:KEYWORD_RESCUE_MODIFIER, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_RETRY token
-    def KEYWORD_RETRY(value, location = Location.null)
-      Token.new(:KEYWORD_RETRY, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_RETURN token
-    def KEYWORD_RETURN(value, location = Location.null)
-      Token.new(:KEYWORD_RETURN, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_SELF token
-    def KEYWORD_SELF(value, location = Location.null)
-      Token.new(:KEYWORD_SELF, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_SUPER token
-    def KEYWORD_SUPER(value, location = Location.null)
-      Token.new(:KEYWORD_SUPER, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_THEN token
-    def KEYWORD_THEN(value, location = Location.null)
-      Token.new(:KEYWORD_THEN, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_TRUE token
-    def KEYWORD_TRUE(value, location = Location.null)
-      Token.new(:KEYWORD_TRUE, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_UNDEF token
-    def KEYWORD_UNDEF(value, location = Location.null)
-      Token.new(:KEYWORD_UNDEF, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_UNLESS token
-    def KEYWORD_UNLESS(value, location = Location.null)
-      Token.new(:KEYWORD_UNLESS, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_UNLESS_MODIFIER token
-    def KEYWORD_UNLESS_MODIFIER(value, location = Location.null)
-      Token.new(:KEYWORD_UNLESS_MODIFIER, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_UNTIL token
-    def KEYWORD_UNTIL(value, location = Location.null)
-      Token.new(:KEYWORD_UNTIL, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_UNTIL_MODIFIER token
-    def KEYWORD_UNTIL_MODIFIER(value, location = Location.null)
-      Token.new(:KEYWORD_UNTIL_MODIFIER, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_WHEN token
-    def KEYWORD_WHEN(value, location = Location.null)
-      Token.new(:KEYWORD_WHEN, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_WHILE token
-    def KEYWORD_WHILE(value, location = Location.null)
-      Token.new(:KEYWORD_WHILE, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_WHILE_MODIFIER token
-    def KEYWORD_WHILE_MODIFIER(value, location = Location.null)
-      Token.new(:KEYWORD_WHILE_MODIFIER, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD_YIELD token
-    def KEYWORD_YIELD(value, location = Location.null)
-      Token.new(:KEYWORD_YIELD, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD___ENCODING__ token
-    def KEYWORD___ENCODING__(value, location = Location.null)
-      Token.new(:KEYWORD___ENCODING__, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD___FILE__ token
-    def KEYWORD___FILE__(value, location = Location.null)
-      Token.new(:KEYWORD___FILE__, value, location.start_offset, location.length)
-    end
-
-    # Create a new KEYWORD___LINE__ token
-    def KEYWORD___LINE__(value, location = Location.null)
-      Token.new(:KEYWORD___LINE__, value, location.start_offset, location.length)
-    end
-
-    # Create a new LABEL token
-    def LABEL(value, location = Location.null)
-      Token.new(:LABEL, value, location.start_offset, location.length)
-    end
-
-    # Create a new LABEL_END token
-    def LABEL_END(value, location = Location.null)
-      Token.new(:LABEL_END, value, location.start_offset, location.length)
-    end
-
-    # Create a new LAMBDA_BEGIN token
-    def LAMBDA_BEGIN(value, location = Location.null)
-      Token.new(:LAMBDA_BEGIN, value, location.start_offset, location.length)
-    end
-
-    # Create a new LESS token
-    def LESS(value, location = Location.null)
-      Token.new(:LESS, value, location.start_offset, location.length)
-    end
-
-    # Create a new LESS_EQUAL token
-    def LESS_EQUAL(value, location = Location.null)
-      Token.new(:LESS_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new LESS_EQUAL_GREATER token
-    def LESS_EQUAL_GREATER(value, location = Location.null)
-      Token.new(:LESS_EQUAL_GREATER, value, location.start_offset, location.length)
-    end
-
-    # Create a new LESS_LESS token
-    def LESS_LESS(value, location = Location.null)
-      Token.new(:LESS_LESS, value, location.start_offset, location.length)
-    end
-
-    # Create a new LESS_LESS_EQUAL token
-    def LESS_LESS_EQUAL(value, location = Location.null)
-      Token.new(:LESS_LESS_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new MINUS token
-    def MINUS(value, location = Location.null)
-      Token.new(:MINUS, value, location.start_offset, location.length)
-    end
-
-    # Create a new MINUS_EQUAL token
-    def MINUS_EQUAL(value, location = Location.null)
-      Token.new(:MINUS_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new MINUS_GREATER token
-    def MINUS_GREATER(value, location = Location.null)
-      Token.new(:MINUS_GREATER, value, location.start_offset, location.length)
-    end
-
-    # Create a new NEWLINE token
-    def NEWLINE(value, location = Location.null)
-      Token.new(:NEWLINE, value, location.start_offset, location.length)
-    end
-
-    # Create a new NUMBERED_REFERENCE token
-    def NUMBERED_REFERENCE(value, location = Location.null)
-      Token.new(:NUMBERED_REFERENCE, value, location.start_offset, location.length)
-    end
-
-    # Create a new PARENTHESIS_LEFT token
-    def PARENTHESIS_LEFT(value, location = Location.null)
-      Token.new(:PARENTHESIS_LEFT, value, location.start_offset, location.length)
-    end
-
-    # Create a new PARENTHESIS_LEFT_PARENTHESES token
-    def PARENTHESIS_LEFT_PARENTHESES(value, location = Location.null)
-      Token.new(:PARENTHESIS_LEFT_PARENTHESES, value, location.start_offset, location.length)
-    end
-
-    # Create a new PARENTHESIS_RIGHT token
-    def PARENTHESIS_RIGHT(value, location = Location.null)
-      Token.new(:PARENTHESIS_RIGHT, value, location.start_offset, location.length)
-    end
-
-    # Create a new PERCENT token
-    def PERCENT(value, location = Location.null)
-      Token.new(:PERCENT, value, location.start_offset, location.length)
-    end
-
-    # Create a new PERCENT_EQUAL token
-    def PERCENT_EQUAL(value, location = Location.null)
-      Token.new(:PERCENT_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new PERCENT_LOWER_I token
-    def PERCENT_LOWER_I(value, location = Location.null)
-      Token.new(:PERCENT_LOWER_I, value, location.start_offset, location.length)
-    end
-
-    # Create a new PERCENT_LOWER_W token
-    def PERCENT_LOWER_W(value, location = Location.null)
-      Token.new(:PERCENT_LOWER_W, value, location.start_offset, location.length)
-    end
-
-    # Create a new PERCENT_LOWER_X token
-    def PERCENT_LOWER_X(value, location = Location.null)
-      Token.new(:PERCENT_LOWER_X, value, location.start_offset, location.length)
-    end
-
-    # Create a new PERCENT_UPPER_I token
-    def PERCENT_UPPER_I(value, location = Location.null)
-      Token.new(:PERCENT_UPPER_I, value, location.start_offset, location.length)
-    end
-
-    # Create a new PERCENT_UPPER_W token
-    def PERCENT_UPPER_W(value, location = Location.null)
-      Token.new(:PERCENT_UPPER_W, value, location.start_offset, location.length)
-    end
-
-    # Create a new PIPE token
-    def PIPE(value, location = Location.null)
-      Token.new(:PIPE, value, location.start_offset, location.length)
-    end
-
-    # Create a new PIPE_EQUAL token
-    def PIPE_EQUAL(value, location = Location.null)
-      Token.new(:PIPE_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new PIPE_PIPE token
-    def PIPE_PIPE(value, location = Location.null)
-      Token.new(:PIPE_PIPE, value, location.start_offset, location.length)
-    end
-
-    # Create a new PIPE_PIPE_EQUAL token
-    def PIPE_PIPE_EQUAL(value, location = Location.null)
-      Token.new(:PIPE_PIPE_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new PLUS token
-    def PLUS(value, location = Location.null)
-      Token.new(:PLUS, value, location.start_offset, location.length)
-    end
-
-    # Create a new PLUS_EQUAL token
-    def PLUS_EQUAL(value, location = Location.null)
-      Token.new(:PLUS_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new QUESTION_MARK token
-    def QUESTION_MARK(value, location = Location.null)
-      Token.new(:QUESTION_MARK, value, location.start_offset, location.length)
-    end
-
-    # Create a new RATIONAL_NUMBER token
-    def RATIONAL_NUMBER(value, location = Location.null)
-      Token.new(:RATIONAL_NUMBER, value, location.start_offset, location.length)
-    end
-
-    # Create a new REGEXP_BEGIN token
-    def REGEXP_BEGIN(value, location = Location.null)
-      Token.new(:REGEXP_BEGIN, value, location.start_offset, location.length)
-    end
-
-    # Create a new REGEXP_END token
-    def REGEXP_END(value, location = Location.null)
-      Token.new(:REGEXP_END, value, location.start_offset, location.length)
-    end
-
-    # Create a new SEMICOLON token
-    def SEMICOLON(value, location = Location.null)
-      Token.new(:SEMICOLON, value, location.start_offset, location.length)
-    end
-
-    # Create a new SLASH token
-    def SLASH(value, location = Location.null)
-      Token.new(:SLASH, value, location.start_offset, location.length)
-    end
-
-    # Create a new SLASH_EQUAL token
-    def SLASH_EQUAL(value, location = Location.null)
-      Token.new(:SLASH_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new STAR token
-    def STAR(value, location = Location.null)
-      Token.new(:STAR, value, location.start_offset, location.length)
-    end
-
-    # Create a new STAR_EQUAL token
-    def STAR_EQUAL(value, location = Location.null)
-      Token.new(:STAR_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new STAR_STAR token
-    def STAR_STAR(value, location = Location.null)
-      Token.new(:STAR_STAR, value, location.start_offset, location.length)
-    end
-
-    # Create a new STAR_STAR_EQUAL token
-    def STAR_STAR_EQUAL(value, location = Location.null)
-      Token.new(:STAR_STAR_EQUAL, value, location.start_offset, location.length)
-    end
-
-    # Create a new STRING_BEGIN token
-    def STRING_BEGIN(value, location = Location.null)
-      Token.new(:STRING_BEGIN, value, location.start_offset, location.length)
-    end
-
-    # Create a new STRING_CONTENT token
-    def STRING_CONTENT(value, location = Location.null)
-      Token.new(:STRING_CONTENT, value, location.start_offset, location.length)
-    end
-
-    # Create a new STRING_END token
-    def STRING_END(value, location = Location.null)
-      Token.new(:STRING_END, value, location.start_offset, location.length)
-    end
-
-    # Create a new SYMBOL_BEGIN token
-    def SYMBOL_BEGIN(value, location = Location.null)
-      Token.new(:SYMBOL_BEGIN, value, location.start_offset, location.length)
-    end
-
-    # Create a new TILDE token
-    def TILDE(value, location = Location.null)
-      Token.new(:TILDE, value, location.start_offset, location.length)
-    end
-
-    # Create a new UCOLON_COLON token
-    def UCOLON_COLON(value, location = Location.null)
-      Token.new(:UCOLON_COLON, value, location.start_offset, location.length)
-    end
-
-    # Create a new UDOT_DOT token
-    def UDOT_DOT(value, location = Location.null)
-      Token.new(:UDOT_DOT, value, location.start_offset, location.length)
-    end
-
-    # Create a new UDOT_DOT_DOT token
-    def UDOT_DOT_DOT(value, location = Location.null)
-      Token.new(:UDOT_DOT_DOT, value, location.start_offset, location.length)
-    end
-
-    # Create a new UMINUS token
-    def UMINUS(value, location = Location.null)
-      Token.new(:UMINUS, value, location.start_offset, location.length)
-    end
-
-    # Create a new UMINUS_NUM token
-    def UMINUS_NUM(value, location = Location.null)
-      Token.new(:UMINUS_NUM, value, location.start_offset, location.length)
-    end
-
-    # Create a new UPLUS token
-    def UPLUS(value, location = Location.null)
-      Token.new(:UPLUS, value, location.start_offset, location.length)
-    end
-
-    # Create a new USTAR token
-    def USTAR(value, location = Location.null)
-      Token.new(:USTAR, value, location.start_offset, location.length)
-    end
-
-    # Create a new USTAR_STAR token
-    def USTAR_STAR(value, location = Location.null)
-      Token.new(:USTAR_STAR, value, location.start_offset, location.length)
-    end
-
-    # Create a new WORDS_SEP token
-    def WORDS_SEP(value, location = Location.null)
-      Token.new(:WORDS_SEP, value, location.start_offset, location.length)
-    end
-
-    # Create a new __END__ token
-    def __END__(value, location = Location.null)
-      Token.new(:__END__, value, location.start_offset, location.length)
     end
   end
 end
