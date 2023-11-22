@@ -3331,6 +3331,9 @@ pm_compile_node(rb_iseq_t *iseq, const pm_node_t *node, LINK_ANCHOR *const ret, 
         }
         return;
       }
+      case PM_REQUIRED_PARAMETER_NODE: {
+          return;
+      }
       case PM_SCOPE_NODE: {
         pm_scope_node_t *scope_node = (pm_scope_node_t *)node;
         pm_constant_id_list_t *locals = &scope_node->locals;
